@@ -70,4 +70,4 @@ jobs:
           AWS_DEFAULT_REGION: 'us-east-1'
         working-directory: ${{ github.workspace }}/polybot/ansible
         run: |
-          ansible-playbook -i aws_ec2.yml playbook.yml --extra-vars "github_run_number=${{ github.run_number }}"
+          ansible-playbook -i aws_ec2.yaml playbook.yaml --extra-vars "github_run_number=${{ github.run_number }}"
