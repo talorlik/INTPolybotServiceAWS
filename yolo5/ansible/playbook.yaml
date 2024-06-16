@@ -36,3 +36,4 @@
           SQS_QUEUE_RESULTS: "talo-sqs-results"
           BUCKET_NAME: "talo-s3"
           BUCKET_PREFIX: "images"
+        restart_policy: always
