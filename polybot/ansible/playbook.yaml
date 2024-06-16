@@ -1,0 +1,38 @@
+- name: Polybot EC2s
+  hosts: all
+  become: yes
+  tasks:
+    - name: Get AWS_ACCESS_KEY_ID from environment
+      set_fact:
+        aws_default_region: "{{ lookup('env', 'AWS_DEFAULT_REGION') }}"
+
+    - name: Login to Amazon ECR
+      shell: |
+        aws ecr get-login-password --region {{ aws_default_region }} | docker login --username AWS --password-stdin 019273956931.dkr.ecr.{{ aws_default_region }}.amazonaws.com
+      args:
+        warn: false
+
+    - name: Pull latest Docker image
+      docker_image:
+        name: "019273956931.dkr.ecr.{{ aws_default_region }}.amazonaws.com/talo-docker-images:polybot-v2-{{ github_run_number }}"
+        source: pull
+
+    - name: Stop and remove existing container
+      docker_container:
+        name: polybot
+        state: absent
+
+    - name: Run new container
+      docker_container:
+        name: polybot
+        image: "019273956931.dkr.ecr.{{ aws_default_region }}.amazonaws.com/talo-docker-images:polybot-{{ github_run_number }}"
+        state: started
+        published_ports:
+          - "8443:8443"
+        env:
+          AWS_DEFAULT_REGION: "{{ aws_default_region }}"
+          TELEGRAM_APP_URL: "https://talo-polybot.int-devops.click"
+          SQS_QUEUE_IDENTIFY: "talo-sqs-identify"
+          SQS_QUEUE_RESULTS: "talo-sqs-results"
+          BUCKET_NAME: "talo-s3"
+          BUCKET_PREFIX: "images"

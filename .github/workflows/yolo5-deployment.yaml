@@ -15,20 +15,58 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build and push image
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
         run: |
           cd yolo5
-          
-          # TODO your implementation here....          
+
+          # Login to ECR (commend in in case you use ECR, change region code and ECR URI):
+          aws ecr get-login-password --region ${{ env.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin 019273956931.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com
+
+          # Define the base name of the image and the tag separately
+          IMAGE_BASE_NAME=yolo5-v2
+          IMAGE_TAG=${{ github.run_number }}
+
+          # Build the image
+          docker build -t ${IMAGE_BASE_NAME}:${IMAGE_TAG} .
+
+          # Tag the image for ECR
+          docker tag ${IMAGE_BASE_NAME}:${IMAGE_TAG} 019273956931.dkr.ecr.us-east-1.amazonaws.com/talo-docker-images:${IMAGE_BASE_NAME}-${IMAGE_TAG}
+
+          # Push the image to ECR
+          docker push 019273956931.dkr.ecr.us-east-1.amazonaws.com/talo-docker-images:${IMAGE_BASE_NAME}-${IMAGE_TAG}
 
   Deploy:
+    name: Deploy Latest Yolo5 Docker Container
     runs-on: ubuntu-latest
     needs:
       - Build
-
     steps:
+      - name: Install Ansible and boto3
+        run: |
+          python -m pip install --upgrade pip
+          pip install ansible boto3
+
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa
+          chmod 600 /home/runner/.ssh/id_rsa
+
+      - name: Add SSH key to the agent
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add /home/runner/.ssh/id_rsa
+
       - name: Checkout the repo code
         uses: actions/checkout@v2
-      - name: Deploy new version
-        run: |         
-          # TODO your implementation here....     
-     
+
+      - name: Run Ansible Playbook
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: 'us-east-1'
+        run: |
+          cd INTPolybotServiceAWS/yolo5/ansible
+          ansible-playbook -i aws_ec2.yml playbook.yml --extra-vars "github_run_number=${{ github.run_number }}"
