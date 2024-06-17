@@ -1,6 +1,14 @@
 - name: Polybot EC2s
   hosts: all
+  vars_files:
+    - vars.yaml
   become: yes
+  vars:
+    ansible_user: ubuntu
+  pre_tasks:
+    - name: Set the SSH key for the play
+      set_fact:
+        ansible_ssh_private_key_file: "{{ key_pair_files['talo-key-pair'] }}"
   tasks:
     - name: Get AWS_ACCESS_KEY_ID from environment
       set_fact:
@@ -9,8 +17,6 @@
     - name: Login to Amazon ECR
       shell: |
         aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin 019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com
-      args:
-        warn: false
 
     - name: Pull latest Docker image
       docker_image:
@@ -25,7 +31,7 @@
     - name: Run new container
       docker_container:
         name: polybot
-        image: "019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com/talo-docker-images:polybot-{{ github_run_number }}"
+        image: "019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com/talo-docker-images:polybot-v2-{{ github_run_number }}"
         state: started
         published_ports:
           - "8443:8443"

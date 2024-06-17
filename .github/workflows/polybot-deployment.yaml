@@ -55,15 +55,6 @@ jobs:
           echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa.pem
           chmod 400 /home/runner/.ssh/id_rsa.pem
 
-      - name: Configure SSH
-        run: |
-          echo -e "Host *\n  IdentityFile ~/.ssh/id_rsa.pem\n  StrictHostKeyChecking no\n  UserKnownHostsFile=/dev/null\n" >> /home/runner/.ssh/config
-
-      - name: Add SSH key to the agent
-        run: |
-          eval "$(ssh-agent -s)"
-          ssh-add /home/runner/.ssh/id_rsa.pem
-
       - name: Checkout the repo code
         uses: actions/checkout@v2
 
