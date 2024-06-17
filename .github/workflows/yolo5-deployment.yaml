@@ -65,4 +65,4 @@ jobs:
           AWS_REGION: 'us-east-1'
         working-directory: ${{ github.workspace }}/yolo5/ansible
         run: |
-          ansible-playbook -i aws_ec2.yaml playbook.yaml --extra-vars "github_run_number=${{ github.run_number }}"
+          ansible-playbook -i aws_ec2.yaml playbook.yaml --private-key /home/runner/.ssh/id_rsa.pem --extra-vars "github_run_number=${{ github.run_number }}"
