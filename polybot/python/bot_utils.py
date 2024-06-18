@@ -45,7 +45,7 @@ def get_secret(secret_name, region_name):
     except secret_manager.exceptions.ResourceNotFoundException as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ResourceNotFoundException has occurred.\n{str(e)}")
         return f"Retrieval of secret {secret_name} failed. A ResourceNotFoundException has occurred.\n{str(e)}", 400
-    except boto3.exceptions.ClientError as e:
+    except boto_exceptions.ClientError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}")
         return f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}", 500
     except Exception as e:
