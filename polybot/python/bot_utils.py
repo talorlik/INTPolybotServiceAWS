@@ -67,36 +67,6 @@ def get_secret_value(region_name, secret_name, key_name):
     logger.info(f"Fetching {secret_name} succeeded.\n\n{response}")
     return secret_value, 200
 
-def create_certificate_from_secret(region_name, secret_name, key_name, cert_file_name):
-    response = get_secret_value(region_name, secret_name, key_name)
-    if response[1] != 200:
-        return response[0], response[1]
-
-    try:
-        with open(cert_file_name, 'w+') as dom_cert:
-            dom_cert.write(response[0])
-
-        # Change the file permissions to 644
-        os.chmod(cert_file_name, 0o644)
-    except PermissionError as e:
-        logger.exception(f"Creation of domain certificate file failed. A PermissionError has occurred.\n{str(e)}")
-        return f"Creation of domain certificate file failed. A PermissionError has occurred.\n{str(e)}", 500
-    except IsADirectoryError as e:
-        logger.exception(f"Creation of domain certificate file failed. An IsADirectoryError has occurred.\n{str(e)}")
-        return f"Creation of domain certificate file failed. An IsADirectoryError has occurred.\n{str(e)}", 500
-    except OSError as e:
-        logger.exception(f"Creation of domain certificate file failed. An {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Creation of domain certificate file failed. An {type(e).__name__} has occurred.\n{str(e)}", 500
-    except Exception as e:
-        logger.exception(f"Creation of domain certificate file failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Creation of domain certificate file failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
-
-    # Get the absolute path of the created file
-    absolute_path = os.path.abspath(cert_file_name)
-
-    logger.info(f"Creation of domain certificate file succeeded. Path: {absolute_path}")
-    return absolute_path, 200
-
 def upload_image_to_s3(bucket_name, key, image_path):
     try:
         s3_client = boto3.client('s3')

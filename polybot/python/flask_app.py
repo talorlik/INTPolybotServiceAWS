@@ -15,7 +15,7 @@ if response[1] != 200:
 TELEGRAM_TOKEN = response[0]
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 
-response = create_certificate_from_secret('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE', 'talo-polybot.pem')
+response = get_secret_value('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE')
 if response[1] != 200:
     raise ValueError(response[0])
 
