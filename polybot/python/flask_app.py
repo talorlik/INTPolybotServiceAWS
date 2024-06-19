@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from threading import Thread
 import os
 from bot import BotFactory
-from bot_utils import get_secret
+from bot_utils import get_secret, create_certificate_from_secret
 import boto3
 from process_results import ProcessResults
 
@@ -15,9 +15,16 @@ if response[1] != 200:
 
 TELEGRAM_TOKEN = response[0]
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
+
+response = create_certificate_from_secret('talo-polybot.pem', 'talo/domain/certificate', 'us-east-1')
+if response[1] != 200:
+    raise ValueError(response[0])
+
+DOMAIN_CERTIFICATE = response[0]
+
 queue_results = os.environ['SQS_QUEUE_RESULTS']
 
-bot_factory = BotFactory(TELEGRAM_TOKEN, TELEGRAM_APP_URL)
+bot_factory = BotFactory(TELEGRAM_TOKEN, TELEGRAM_APP_URL, DOMAIN_CERTIFICATE)
 
 # Start the consume thread when the application starts
 process_results_thread = ProcessResults(bot_factory, queue_results)
