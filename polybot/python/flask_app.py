@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 from bot import BotFactory
-from bot_utils import get_secret_value, create_certificate_from_secret
+from bot_utils import get_secret_value
 from process_results import ProcessResults
 from process_messages import ProcessMessages
 
