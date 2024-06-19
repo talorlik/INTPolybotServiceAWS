@@ -52,7 +52,13 @@ def get_secret(secret_name, region_name):
         logger.exception(f"Retrieval of secret {secret_name} failed. An Unknown has occurred.\n{str(e)}")
         return f"Retrieval of secret {secret_name} failed. An Unknown has occurred.\n{str(e)}", 500
 
-    return response['SecretString'], 200
+    secret_str = response.get("SecretString", "")
+    if not secret_str:
+        logger.exception(f"Retrieval of secret {secret_name} failed. Secret value is empty")
+        return f"Retrieval of secret {secret_name} failed. Secret value is empty", 500
+
+    logger.info(f"Fetching {secret_name} succeeded.\n\n{response}")
+    return secret_str, 200
 
 def upload_image_to_s3(bucket_name, key, image_path):
     try:
