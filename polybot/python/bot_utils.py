@@ -3,13 +3,14 @@ from botocore import exceptions as boto_exceptions
 from loguru import logger
 from collections import Counter
 import os
+import json
 from boto3.dynamodb.types import TypeDeserializer
 
 aws_profile = os.getenv("AWS_PROFILE", None)
 if aws_profile is not None and aws_profile == "dev":
     boto3.setup_default_session(profile_name=aws_profile)
 
-def get_secret(secret_name, region_name):
+def get_secret_value(region_name, secret_name, key_name):
     try:
         secret_manager = boto3.client('secretsmanager', region_name)
     except boto_exceptions.ProfileNotFound as e:
@@ -57,11 +58,17 @@ def get_secret(secret_name, region_name):
         logger.exception(f"Retrieval of secret {secret_name} failed. Secret value is empty")
         return f"Retrieval of secret {secret_name} failed. Secret value is empty", 500
 
-    logger.info(f"Fetching {secret_name} succeeded.\n\n{response}")
-    return secret_str, 200
+    # Parse the JSON string to get the actual values
+    secret_dict = json.loads(secret_str)
 
-def create_certificate_from_secret(cert_file_name, secret_name, region_name):
-    response = get_secret(secret_name, region_name)
+    # Access the specific value you need
+    secret_value = secret_dict[key_name]
+
+    logger.info(f"Fetching {secret_name} succeeded.\n\n{response}")
+    return secret_value, 200
+
+def create_certificate_from_secret(region_name, secret_name, key_name, cert_file_name):
+    response = get_secret_value(region_name, secret_name, key_name)
     if response[1] != 200:
         return response[0], response[1]
 

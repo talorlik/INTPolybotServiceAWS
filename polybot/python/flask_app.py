@@ -1,43 +1,34 @@
 from flask import Flask, request, jsonify
-from threading import Thread
 import os
 from bot import BotFactory
-from bot_utils import get_secret, create_certificate_from_secret
-import boto3
+from bot_utils import get_secret_value, create_certificate_from_secret
 from process_results import ProcessResults
+from process_messages import ProcessMessages
 
 app = Flask(__name__, static_url_path='')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-response = get_secret('talo/telegram/token', 'us-east-1')
+response = get_secret_value('us-east-1', 'talo/telegram/token', 'TELEGRAM_TOKEN')
 if response[1] != 200:
     raise ValueError(response[0])
 
 TELEGRAM_TOKEN = response[0]
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 
-response = create_certificate_from_secret('talo-polybot.pem', 'talo/domain/certificate', 'us-east-1')
+response = create_certificate_from_secret('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE', 'talo-polybot.pem')
 if response[1] != 200:
     raise ValueError(response[0])
 
 DOMAIN_CERTIFICATE = response[0]
 
-queue_results = os.environ['SQS_QUEUE_RESULTS']
-
 bot_factory = BotFactory(TELEGRAM_TOKEN, TELEGRAM_APP_URL, DOMAIN_CERTIFICATE)
 
 # Start the consume thread when the application starts
-process_results_thread = ProcessResults(bot_factory, queue_results)
+process_results_thread = ProcessResults(bot_factory)
 process_results_thread.start()
 
-class Compute(Thread):
-    def __init__(self, bot, msg):
-        Thread.__init__(self)
-        self.bot = bot
-        self.msg = msg
-
-    def run(self):
-        self.bot.handle_message(self.msg)
+process_messages_thread = ProcessMessages(bot_factory)
+process_messages_thread.start()
 
 @app.route('/', methods=['GET'])
 def index():
@@ -57,10 +48,8 @@ def webhook():
     else:
         return 'No message', 400
 
-    bot = bot_factory.get_bot(msg)
+    process_messages_thread.message_queue.put(msg)
 
-    msg_thread = Compute(bot, msg)
-    msg_thread.start()
     return 'Ok', 200
 
 @app.route(f'/loadTest/', methods=['POST'])
@@ -73,10 +62,8 @@ def load_test():
     else:
         return 'No message', 400
 
-    bot = bot_factory.get_bot(msg)
+    process_messages_thread.message_queue.put(msg)
 
-    msg_thread = Compute(bot, msg)
-    msg_thread.start()
     return 'Ok', 200
 
 if __name__ == "__main__":

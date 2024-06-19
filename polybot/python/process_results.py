@@ -3,11 +3,11 @@ import boto3
 import os
 
 class ProcessResults(Thread):
-    def __init__(self, bot_factory, queue_name):
+    def __init__(self, bot_factory):
         Thread.__init__(self)
         self.bot_factory = bot_factory
         self.sqs_client = boto3.client('sqs', region_name=os.environ['AWS_DEFAULT_REGION'])
-        self.queue_name = queue_name
+        self.queue_name = os.environ['SQS_QUEUE_RESULTS']
 
     def run(self):
         while True:
