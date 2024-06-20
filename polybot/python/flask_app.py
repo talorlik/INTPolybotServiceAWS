@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 import os
 from bot import BotFactory
-from bot_utils import get_secret_value
+from bot_utils import get_secret_value, create_certificate_from_secret
 from process_results import ProcessResults
 from process_messages import ProcessMessages
 
@@ -15,7 +15,11 @@ if response[1] != 200:
 TELEGRAM_TOKEN = response[0]
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 
-response = get_secret_value('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE')
+# response = get_secret_value('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE')
+# if response[1] != 200:
+#     raise ValueError(response[0])
+
+response = create_certificate_from_secret('us-east-1', 'talo/domain/certificate', 'DOMAIN_CERTIFICATE', 'talo-polybot.pem')
 if response[1] != 200:
     raise ValueError(response[0])
 
