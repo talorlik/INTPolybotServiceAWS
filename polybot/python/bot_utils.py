@@ -10,7 +10,7 @@ aws_profile = os.getenv("AWS_PROFILE", None)
 if aws_profile is not None and aws_profile == "dev":
     boto3.setup_default_session(profile_name=aws_profile)
 
-def get_secret_value(region_name, secret_name, key_name):
+def get_secret_value(region_name, secret_name, key_name=None):
     try:
         secret_manager = boto3.client('secretsmanager', region_name)
     except boto_exceptions.ProfileNotFound as e:
@@ -58,13 +58,16 @@ def get_secret_value(region_name, secret_name, key_name):
         logger.exception(f"Retrieval of secret {secret_name} failed. Secret value is empty")
         return f"Retrieval of secret {secret_name} failed. Secret value is empty", 500
 
-    # Parse the JSON string to get the actual values
-    secret_dict = json.loads(secret_str)
+    if key_name:
+        # Parse the JSON string to get the actual values
+        secret_dict = json.loads(secret_str)
 
-    # Access the specific value you need
-    secret_value = secret_dict[key_name]
+        # Access the specific value you need
+        secret_value = secret_dict[key_name]
+    else:
+        secret_value = secret_str
 
-    logger.info(f"Fetching {secret_name} succeeded.\n\n{response}")
+    logger.info(f"Fetching secret: {secret_name}, succeeded.")
     return secret_value, 200
 
 def upload_image_to_s3(bucket_name, key, image_path):

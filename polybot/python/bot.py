@@ -61,7 +61,7 @@ class BotFactory:
         time.sleep(0.5)
 
         # Set the webhook URL
-        self.tgbot.set_webhook(url=f'{telegram_chat_url}/{token}/', certificate=domain_certificate, timeout=90)
+        self.tgbot.set_webhook(url=f'{telegram_chat_url}:8443/{token}/', certificate=domain_certificate, timeout=90)
 
         # Initiate the exception handler and pass it the bot object to handle messages
         self.tgbot.exception_handler = ExceptionHandler(self.tgbot)
