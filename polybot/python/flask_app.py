@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import os
+from loguru import logger
 from bot import BotFactory
 from bot_utils import get_secret_value
 from process_results import ProcessResults
@@ -47,6 +48,8 @@ def webhook():
         msg = req['edited_message']
     else:
         return 'No message', 400
+
+    logger.info(f"Incoming request with message:\n{msg}")
 
     process_messages_thread.message_queue.put(msg)
 
