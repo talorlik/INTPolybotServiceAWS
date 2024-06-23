@@ -3,4 +3,3 @@ pyyaml
 loguru
 boto3
 pymongo
-get-docker-secret
