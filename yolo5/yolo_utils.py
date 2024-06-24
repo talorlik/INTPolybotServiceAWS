@@ -4,12 +4,8 @@ from detect import run
 import boto3
 from botocore import exceptions as boto_exceptions
 from loguru import logger
-from pymongo import MongoClient
-from pymongo import errors as mongo_errors
 import yaml
 import os
-from urllib.parse import quote_plus
-from get_docker_secret import get_docker_secret
 from bson import ObjectId
 
 images_bucket = os.environ['BUCKET_NAME']
@@ -37,7 +33,7 @@ def convert_labels(labels):
     return [
         {
             "M": {
-                "class": {"S": label["label"]},
+                "class": {"S": label["class"]},
                 "cx": {"N": str(label["cx"])},
                 "cy": {"N": str(label["cy"])},
                 "width": {"N": str(label["width"])},
@@ -156,7 +152,7 @@ def identify(img_name, prediction_id):
     # Download img_name from S3 and store it to a local path from the original_img_path variable.
     response = download_image_from_s3(images_bucket, original_img_path, original_img_path)
 
-    if response[1] != 200:
+    if int(response[1]) != 200:
         logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
         return f'Prediction: {prediction_id}/{img_name} failed.\n\n{response[0]}', response[1]
 
@@ -179,7 +175,7 @@ def identify(img_name, prediction_id):
     # Uploads the predicted image (predicted_img_path) to S3.
     response = upload_image_to_s3(images_bucket, original_img_path, predicted_img_path)
 
-    if response[1] != 200:
+    if int(response[1]) != 200:
         logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
         return f'Prediction: {prediction_id}/{img_name} failed.\n\n{response[0]}', response[1]
 
@@ -230,17 +226,17 @@ def write_to_db(chat_id, prediction_summary):
         logger.exception(f"Writing to dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
         return f"Writing to dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
 
-    data = {
-        'prediction_id': {'S': str(prediction_summary['prediction_id'])},
-        'chat_id': {'S': chat_id},
-        'original_img_path': {'S': prediction_summary['original_img_path']},
-        'predicted_img_path': {'S': prediction_summary['predicted_img_path']},
-        'labels': {'L': convert_labels(prediction_summary['labels'])},
-        'time': {'N': str(prediction_summary['time'])}
-    }
-
     # Insert data into the table
     try:
+        data = {
+            'predictionId': {'S': str(prediction_summary['prediction_id'])},
+            'chatId': {'N': str(chat_id)},
+            'originalImgPath': {'S': prediction_summary['original_img_path']},
+            'predictedImgPath': {'S': prediction_summary['predicted_img_path']},
+            'labels': {'L': convert_labels(prediction_summary['labels'])},
+            'time': {'N': str(prediction_summary['time'])}
+        }
+
         response = dynamodb_client.put_item(
             TableName='talo-prediction-results',
             Item=data,
@@ -272,6 +268,9 @@ def write_to_db(chat_id, prediction_summary):
     except boto_exceptions.ClientError as e:
         logger.exception(f"Writing to dynamodb failed. A ClientError has occurred.\n{str(e)}")
         return f"Writing to dynamodb failed. A ClientError has occurred.\n{str(e)}", 500
+    except Exception as e:
+        logger.exception(f"Writing to dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
+        return f"Writing to dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
 
     logger.info("Image prediction details were written to the DB successfully")
     logger.info(response)

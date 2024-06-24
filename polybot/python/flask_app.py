@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import os
-from loguru import logger
+from queue import Queue
 from bot import BotFactory
 from bot_utils import get_secret_value
 from process_results import ProcessResults
@@ -10,26 +10,17 @@ app = Flask(__name__, static_url_path='')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
 response = get_secret_value('us-east-1', 'talo/telegram/token', 'TELEGRAM_TOKEN')
-if response[1] != 200:
+if int(response[1]) != 200:
     raise ValueError(response[0])
 
 TELEGRAM_TOKEN = response[0]
 TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 
 response = get_secret_value('us-east-1', 'talo/sub-domain/certificate')
-if response[1] != 200:
+if int(response[1]) != 200:
     raise ValueError(response[0])
 
 DOMAIN_CERTIFICATE = response[0]
-
-bot_factory = BotFactory(TELEGRAM_TOKEN, TELEGRAM_APP_URL, DOMAIN_CERTIFICATE)
-
-# Start the consume thread when the application starts
-process_results_thread = ProcessResults(bot_factory)
-process_results_thread.start()
-
-process_messages_thread = ProcessMessages(bot_factory)
-process_messages_thread.start()
 
 @app.route('/', methods=['GET'])
 def index():
@@ -49,9 +40,7 @@ def webhook():
     else:
         return 'No message', 400
 
-    logger.info(f"Incoming request with message:\n{msg}")
-
-    process_messages_thread.message_queue.put(msg)
+    message_queue.put(msg)
 
     return 'Ok', 200
 
@@ -65,9 +54,23 @@ def load_test():
     else:
         return 'No message', 400
 
-    process_messages_thread.message_queue.put(msg)
+    message_queue.put(msg)
 
     return 'Ok', 200
 
 if __name__ == "__main__":
+    bot_factory = BotFactory(TELEGRAM_TOKEN, TELEGRAM_APP_URL, DOMAIN_CERTIFICATE)
+
+    # Create a message queue
+    message_queue = Queue()
+
+    # Start the results and messages threads when the application starts
+    results_queue_thread = ProcessResults(app, bot_factory)
+    results_queue_thread.daemon = True
+    results_queue_thread.start()
+
+    messages_queue_thread = ProcessMessages(app, bot_factory, message_queue)
+    messages_queue_thread.daemon = True
+    messages_queue_thread.start()
+
     app.run(host='0.0.0.0', port=8443)

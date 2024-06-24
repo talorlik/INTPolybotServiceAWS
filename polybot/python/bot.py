@@ -1,4 +1,3 @@
-from flask import jsonify
 import telebot
 from loguru import logger
 import os
@@ -39,10 +38,10 @@ class ExceptionHandler(telebot.ExceptionHandler):
     def handle(self, exception):
         with self._lock:
             if self._chat_id is not None:
-                logger.exception(f"Exception in chat {self.chat_id}: {exception}")
-                return self.bot.send_message(self.chat_id, f"An error has occurred:\n{exception}")
+                logger.exception(f"Exception in chat {self.chat_id}:\n{exception}")
+                return self.bot.send_message(self.chat_id, f"An error has occurred:\n{exception}\nPlease try again.")
             else:
-                logger.exception("Exception occurred without an active chat context.")
+                logger.exception(f"Exception occurred without an active chat context.\n{exception}")
         return False
 
 class BotFactory:
@@ -61,7 +60,8 @@ class BotFactory:
         time.sleep(0.5)
 
         # Set the webhook URL
-        self.tgbot.set_webhook(url=f'{telegram_chat_url}:8443/{token}/', certificate=domain_certificate, timeout=90)
+        # self.tgbot.set_webhook(url=f'{telegram_chat_url}:8443/{token}/', certificate=domain_certificate, timeout=90)
+        self.tgbot.set_webhook(url=f'{telegram_chat_url}/{token}/', timeout=90)
 
         # Initiate the exception handler and pass it the bot object to handle messages
         self.tgbot.exception_handler = ExceptionHandler(self.tgbot)
@@ -208,9 +208,7 @@ These are the available actions:
             else:
                 self.send_text(chat_id, f'Your original message: {msg["text"]}')
         else:
-            e = Exception('None user message received')
-            logger.exception(e)
-            self.handle_exception(e, chat_id)
+            self.handle_exception(Exception('None user message received'), chat_id)
 
 class QuoteBot(Bot):
     """
@@ -231,9 +229,7 @@ class QuoteBot(Bot):
             if msg["text"] != 'Please don\'t quote me':
                 self.send_text_with_quote(chat_id, msg["text"], quoted_msg_id=msg["message_id"])
         else:
-            e = Exception('None user message received')
-            logger.exception(e)
-            self.handle_exception(e, chat_id)
+            self.handle_exception(Exception('None user message received'), chat_id)
 
 class ImageProcessingBot(Bot):
     """
@@ -262,8 +258,7 @@ class ImageProcessingBot(Bot):
             with open(file_info.file_path, 'wb') as photo:
                 photo.write(data)
         except OSError as e:
-            logger.exception(e)
-            self.handle_exception(f"{e}\nPlease try again.", msg["chat"]["id"])
+            self.handle_exception(e, msg["chat"]["id"])
             return None
 
         return file_info.file_path
@@ -276,7 +271,6 @@ class ImageProcessingBot(Bot):
             if not img_path.exists() and img_path.is_file():
                 raise FileNotFoundError("Image doesn't exist or it's not a file. Please try again")
         except FileNotFoundError as e:
-            logger.exception(e)
             self.handle_exception(e, chat_id)
             return
 
@@ -312,11 +306,9 @@ class ImageProcessingBot(Bot):
                 if "concat" in caption and not media_group_id:
                     raise RuntimeError("You need to upload more than one image in order to concat. Please try again.")
         except ValueError as e:
-            logger.exception(e)
             self.handle_exception(e, chat_id)
             return
         except RuntimeError as e:
-            logger.exception(e)
             self.handle_exception(e, chat_id)
             return
 
@@ -325,17 +317,14 @@ class ImageProcessingBot(Bot):
         try:
             if not image_path:
                 raise Exception("Was unable to download image from Bot. Please try again.")
+
+            img = Img(image_path)
         except Exception as e:
-            logger.exception(e)
             self.handle_exception(e, chat_id)
             return
 
-        try:
-            img = Img(image_path)
-        except Exception as e:
-            logger.exception(e)
-            self.handle_exception(f"{e}\nPlease try again.", chat_id)
-            return
+        # Let the user that something is happening
+        self.send_text(chat_id, "Processing, please wait...")
 
         if (caption and "concat" in caption) or media_group_id:
             if caption:
@@ -373,16 +362,13 @@ class ImageProcessingBot(Bot):
                     # Send the response with the modified image back to the bot
                     self.handle_photo(chat_id, image_path)
                 except ValueError as e:
-                    logger.exception(f"{e}\nPlease try again.")
-                    self.handle_exception(f"{e}\nPlease try again.", chat_id)
+                    self.handle_exception(e, chat_id)
                     return
                 except RuntimeError as e:
-                    logger.exception(f"{e}\nPlease try again.")
-                    self.handle_exception(f"{e}\nPlease try again.", chat_id)
+                    self.handle_exception(e, chat_id)
                     return
                 except Exception as e:
-                    logger.exception(f"{e}\nPlease try again.")
-                    self.handle_exception(f"{e}\nPlease try again.", chat_id)
+                    self.handle_exception(e, chat_id)
                     return
                 finally:
                     # Clean the handled group from the media groups dictionary and reset the direction and sides
@@ -435,11 +421,9 @@ class ImageProcessingBot(Bot):
                 # Send the response with the modified image back to the bot
                 self.handle_photo(chat_id, image_path)
             except ValueError as e:
-                logger.exception(f"{e}\nPlease try again.")
-                self.handle_exception(f"{e}\nPlease try again.", chat_id)
+                self.handle_exception(e, chat_id)
             except Exception as e:
-                logger.exception(f"{e}\nPlease try again.")
-                self.handle_exception(f"{e}\nPlease try again.", chat_id)
+                self.handle_exception(e, chat_id)
 
 class ObjectDetectionBot(ImageProcessingBot):
     """
@@ -455,66 +439,62 @@ class ObjectDetectionBot(ImageProcessingBot):
 
         if "predict" not in caption and "prediction_result" not in caption:
             super().handle_message(msg)
+        elif "prediction_result" in caption:
+            try:
+                response_data = msg["text"]
+
+                if int(msg["status_code"]) != 200:
+                    raise Exception(response_data)
+
+                prediction_id = response_data["prediction_id"]
+
+                response_data = get_from_db(prediction_id)
+
+                if int(response_data[1]) != 200:
+                    raise Exception(response_data[0])
+
+                response = download_image_from_s3(images_bucket, response_data[0]["originalImgPath"], response_data[0]["originalImgPath"], images_prefix)
+
+                if int(response[1]) != 200:
+                    raise Exception(response[0])
+
+                parsed_results = ""
+                try:
+                    parsed_results = parse_result(response_data[0])
+                except Exception as e:
+                    raise e
+
+                image_path = Path(response_data[0]["originalImgPath"])
+                # Send the response with the modified image back to the bot
+                self.handle_photo(chat_id, image_path, parsed_results)
+            except Exception as e:
+                self.handle_exception(e, chat_id)
         elif "predict" in caption:
             image_path = self.download_user_photo(msg)
 
             try:
                 if not image_path:
                     raise Exception("Was unable to download image from Bot. Please try again.")
-            except Exception as e:
-                logger.exception(e)
-                self.handle_exception(e, chat_id)
-                return
 
-            # Let the user that something is happening
-            self.send_text(chat_id, "Processing, please wait...")
+                # Let the user that something is happening
+                self.send_text(chat_id, "Processing, please wait...")
 
-            image_name = os.path.basename(image_path)
+                image_name = os.path.basename(image_path)
 
-            try:
                 response = upload_image_to_s3(images_bucket, f"{images_prefix}/{image_name}", image_path)
 
-                if response[1] != 200:
+                if int(response[1]) != 200:
                     raise Exception(f"{response[0]}\nPlease try again.")
-            except Exception as e:
-                self.handle_exception(e, chat_id)
-                return
 
-            # Send message to the identify queue for the Yolo5 service to pick up
-            response = send_to_sqs(queue_identify, jsonify(f'{"chatId": {chat_id}, "imgName": {image_name}}'))
+                message_dict = {
+                    "chatId": str(chat_id),
+                    "imgName": image_name
+                }
 
-            if response[1] != 200:
-                logger.exception(response[0])
-                self.handle_exception(Exception(response[0]), chat_id)
-                return
-        elif "prediction_result" in caption:
-            try:
-                response_data = msg["text"]
+                # Send message to the identify queue for the Yolo5 service to pick up
+                response = send_to_sqs(queue_identify, json.dumps(message_dict))
 
-                if msg["status_code"] != 200:
-                    raise Exception(response_data)
-
-                prediction_id = response_data["prediction_id"]
-
-                response = get_from_db(prediction_id)
-
-                if response[1] != 200:
+                if int(response[1]) != 200:
                     raise Exception(response[0])
-
-                response = download_image_from_s3(images_bucket, response[0]["original_img_path"], response[0]["original_img_path"], images_prefix)
-
-                if response[1] != 200:
-                    raise Exception(f"{response[0]}\nPlease try again.")
-
-                parsed_results = ""
-                try:
-                    parsed_results = parse_result(response_data)
-                except Exception as e:
-                    raise e
-
-                image_path = Path(response_data["original_img_path"])
-                # Send the response with the modified image back to the bot
-                self.handle_photo(chat_id, image_path, parsed_results)
             except Exception as e:
-                logger.exception(e)
                 self.handle_exception(e, chat_id)

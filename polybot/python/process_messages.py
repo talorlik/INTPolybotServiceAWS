@@ -1,20 +1,22 @@
 from threading import Thread
-import queue
 from loguru import logger
 
 class ProcessMessages(Thread):
-    def __init__(self, bot_factory):
+    def __init__(self, app, bot_factory, message_queue):
         Thread.__init__(self)
+        self.app = app
         self.bot_factory = bot_factory
-        # Create a queue for the ProcessMessages thread
-        logger.info("Queue initiated.")
-        self.message_queue = queue.Queue()
+        self.message_queue = message_queue
 
     def run(self):
-        logger.info("Queue is running.")
-        while True:
-            msg = self.message_queue.get()
-            if msg:
-                logger.info(f"Message received from queue:\n{msg}")
-                bot = self.bot_factory.get_bot(msg)
-                bot.handle_message(msg)
+        with self.app.app_context():
+            while True:
+                try:
+                    # Wait for a message from the queue
+                    msg = self.message_queue.get()
+                    if msg:
+                        bot = self.bot_factory.get_bot(msg)
+                        bot.handle_message(msg)
+                        logger.debug(f"Message processed: {msg}")
+                except Exception as e:
+                    logger.exception(f"Error in ProcessMessages thread: {e}")

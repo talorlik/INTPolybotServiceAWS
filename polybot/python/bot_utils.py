@@ -15,43 +15,43 @@ def get_secret_value(region_name, secret_name, key_name=None):
         secret_manager = boto3.client('secretsmanager', region_name)
     except boto_exceptions.ProfileNotFound as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ProfileNotFound has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A ProfileNotFound has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. A ProfileNotFound has occurred.", 500
     except boto_exceptions.EndpointConnectionError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. An EndpointConnectionError has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. An EndpointConnectionError has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. An EndpointConnectionError has occurred.", 500
     except boto_exceptions.NoCredentialsError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A NoCredentialsError has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A NoCredentialsError has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. A NoCredentialsError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         response = secret_manager.get_secret_value(SecretId=secret_name)
     except secret_manager.exceptions.DecryptionFailure as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A DecryptionFailure has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A DecryptionFailure has occurred.\n{str(e)}", 400
+        return f"Retrieval of secret {secret_name} failed. A DecryptionFailure has occurred.", 400
     except secret_manager.exceptions.InternalServiceError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A InternalServiceError has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A InternalServiceError has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. A InternalServiceError has occurred.", 500
     except secret_manager.exceptions.InvalidParameterException as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A InvalidParameterException has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A InvalidParameterException has occurred.\n{str(e)}", 400
+        return f"Retrieval of secret {secret_name} failed. A InvalidParameterException has occurred.", 400
     except secret_manager.exceptions.InvalidRequestException as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A InvalidRequestException has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A InvalidRequestException has occurred.\n{str(e)}", 400
+        return f"Retrieval of secret {secret_name} failed. A InvalidRequestException has occurred.", 400
     except secret_manager.exceptions.ResourceNotFoundException as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ResourceNotFoundException has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A ResourceNotFoundException has occurred.\n{str(e)}", 400
+        return f"Retrieval of secret {secret_name} failed. A ResourceNotFoundException has occurred.", 400
     except boto_exceptions.ClientError as e:
         logger.exception(f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Retrieval of secret {secret_name} failed. A ClientError has occurred.", 500
     except Exception as e:
-        logger.exception(f"Retrieval of secret {secret_name} failed. An Unknown has occurred.\n{str(e)}")
-        return f"Retrieval of secret {secret_name} failed. An Unknown has occurred.\n{str(e)}", 500
+        logger.exception(f"Retrieval of secret {secret_name} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
+        return f"Retrieval of secret {secret_name} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     secret_str = response.get("SecretString", "")
     if not secret_str:
@@ -75,44 +75,44 @@ def upload_image_to_s3(bucket_name, key, image_path):
         s3_client = boto3.client('s3')
     except boto_exceptions.ProfileNotFound as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A ProfileNotFound has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A ProfileNotFound has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A ProfileNotFound has occurred.", 500
     except boto_exceptions.EndpointConnectionError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. An EndpointConnectionError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. An EndpointConnectionError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. An EndpointConnectionError has occurred.", 500
     except boto_exceptions.NoCredentialsError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A NoCredentialsError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A NoCredentialsError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A NoCredentialsError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         with open(image_path, 'rb') as img:
             s3_client.put_object(Bucket=bucket_name, Key=key, Body=img)
     except FileNotFoundError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A FileNotFoundError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A FileNotFoundError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A FileNotFoundError has occurred.", 500
     except PermissionError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A PermissionError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A PermissionError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A PermissionError has occurred.", 500
     except IsADirectoryError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. An IsADirectoryError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. An IsADirectoryError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. An IsADirectoryError has occurred.", 500
     except OSError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. An {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. An {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. An {type(e).__name__} has occurred.", 500
     except boto_exceptions.ParamValidationError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A ParamValidationError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A ParamValidationError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A ParamValidationError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Upload to {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     logger.info(f"Upload to {bucket_name}/{key} succeeded.")
     return f"Upload to {bucket_name}/{key} succeeded.", 200
@@ -125,44 +125,44 @@ def download_image_from_s3(bucket_name, key, image_path, images_prefix):
         s3_client = boto3.client('s3')
     except boto_exceptions.ProfileNotFound as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. A ProfileNotFound has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. A ProfileNotFound has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. A ProfileNotFound has occurred.", 500
     except boto_exceptions.EndpointConnectionError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An EndpointConnectionError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An EndpointConnectionError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An EndpointConnectionError has occurred.", 500
     except boto_exceptions.NoCredentialsError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. A NoCredentialsError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. A NoCredentialsError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. A NoCredentialsError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         response = s3_client.get_object(Bucket=bucket_name, Key=key)
     except boto_exceptions.ClientError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         with open(image_path, 'wb') as img:
             img.write(response['Body'].read())
     except PermissionError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. A PermissionError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. A PermissionError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. A PermissionError has occurred.", 500
     except IsADirectoryError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An IsADirectoryError has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An IsADirectoryError has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An IsADirectoryError has occurred.", 500
     except OSError as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An {type(e).__name__} has occurred.", 500
     except Exception as e:
         logger.exception(f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Download from {bucket_name}/{key} failed. An Unknown {type(e).__name__} has occurred.", 500
 
     logger.info(f"Download from {bucket_name}/{key} to {image_path} succeeded.")
     return f"Download from {bucket_name}/{key} to {image_path} succeeded.", 200
@@ -176,45 +176,45 @@ def get_from_db(prediction_id):
         dynamodb_client = boto3.client('dynamodb')
     except boto_exceptions.ProfileNotFound as e:
         logger.exception(f"Reading from dynamodb failed. A ProfileNotFound has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A ProfileNotFound has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A ProfileNotFound has occurred.", 500
     except boto_exceptions.EndpointConnectionError as e:
         logger.exception(f"Reading from dynamodb failed. An EndpointConnectionError has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. An EndpointConnectionError has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. An EndpointConnectionError has occurred.", 500
     except boto_exceptions.NoCredentialsError as e:
         logger.exception(f"Reading from dynamodb failed. A NoCredentialsError has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A NoCredentialsError has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A NoCredentialsError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Reading from dynamodb failed. A ClientError has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         response = dynamodb_client.get_item(
             TableName='talo-prediction-results',
             Key={
-                'prediction_id': {'S': prediction_id}
+                'predictionId': {'S': prediction_id}
             }
         )
     except dynamodb_client.exceptions.ProvisionedThroughputExceededException as e:
         logger.exception(f"Reading from dynamodb failed. A ProvisionedThroughputExceededException has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A ProvisionedThroughputExceededException has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A ProvisionedThroughputExceededException has occurred.", 500
     except dynamodb_client.exceptions.ResourceNotFoundException as e:
         logger.exception(f"Reading from dynamodb failed. A ResourceNotFoundException has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A ResourceNotFoundException has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A ResourceNotFoundException has occurred.", 500
     except dynamodb_client.exceptions.RequestLimitExceeded as e:
         logger.exception(f"Reading from dynamodb failed. A RequestLimitExceeded has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A RequestLimitExceeded has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A RequestLimitExceeded has occurred.", 500
     except dynamodb_client.exceptions.InternalServerError as e:
         logger.exception(f"Reading from dynamodb failed. An InternalServerError has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. An InternalServerError has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. An InternalServerError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Reading from dynamodb failed. A ClientError has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Reading from dynamodb failed. An Unknown {type(e).__name__} has occurred.", 500
 
     if 'Item' in response:
         item = response['Item']
@@ -230,19 +230,19 @@ def send_to_sqs(queue_name, message_body):
         sqs_client = boto3.client('sqs')
     except boto_exceptions.ProfileNotFound as e:
         logger.exception(f"Sending message to SQS failed. A ProfileNotFound has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. A ProfileNotFound has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. A ProfileNotFound has occurred.", 500
     except boto_exceptions.EndpointConnectionError as e:
         logger.exception(f"Sending message to SQS failed. An EndpointConnectionError has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. An EndpointConnectionError has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. An EndpointConnectionError has occurred.", 500
     except boto_exceptions.NoCredentialsError as e:
         logger.exception(f"Sending message to SQS failed. A NoCredentialsError has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. A NoCredentialsError has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. A NoCredentialsError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Sending message to SQS failed. A ClientError has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.", 500
 
     try:
         response = sqs_client.send_message(
@@ -251,20 +251,20 @@ def send_to_sqs(queue_name, message_body):
         )
     except boto_exceptions.ParamValidationError as e:
         logger.exception(f"Sending message to SQS failed. A ParamValidationError has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. A ParamValidationError has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. A ParamValidationError has occurred.", 500
     except boto_exceptions.ClientError as e:
         logger.exception(f"Sending message to SQS failed. A ClientError has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. A ClientError has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. A ClientError has occurred.", 500
     except Exception as e:
         logger.exception(f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}")
-        return f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.\n{str(e)}", 500
+        return f"Sending message to SQS failed. An Unknown {type(e).__name__} has occurred.", 500
 
     logger.info(f"Message sent successfully. Message ID: {response['MessageId']}")
     return f"Message sent successfully. Message ID: {response['MessageId']}", 200
 
-def parse_result(json_data) -> str:
+def parse_result(data) -> str:
     # Extract the labels
-    labels = json_data["labels"]
+    labels = data["labels"]
 
     # Create a list of class values from the labels
     class_names = [label["class"] for label in labels if "class" in label]
@@ -277,4 +277,5 @@ def parse_result(json_data) -> str:
     for class_name, count in class_counts.items():
         return_text += f"{class_name.capitalize()}: {count}\n"
 
+    logger.info("Successfully parsed the results.")
     return return_text

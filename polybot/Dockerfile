@@ -37,4 +37,4 @@ USER appuser
 EXPOSE 8443
 
 # Command to run the app
-CMD ["uwsgi", "--ini", "uwsgi.ini"]
+CMD ["python3", "python/flask_app.py"]
