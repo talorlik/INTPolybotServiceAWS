@@ -1,4 +1,4 @@
-FROM ultralytics/yolov5:v6.2-cpu
+FROM ultralytics/yolov5:latest-cpu
 WORKDIR /usr/src/app
 RUN pip install --upgrade pip
 COPY requirements.txt .
