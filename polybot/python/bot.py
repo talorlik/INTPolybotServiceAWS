@@ -21,8 +21,8 @@ class ExceptionHandler(telebot.ExceptionHandler):
     """
     _lock = threading.Lock()
 
-    def __init__(self, bot):
-        self.bot = bot
+    def __init__(self):
+        self._bot = None
         self._chat_id = None
 
     @property
@@ -35,9 +35,19 @@ class ExceptionHandler(telebot.ExceptionHandler):
         with self._lock:
             self._chat_id = value
 
+    @property
+    def bot(self):
+        with self._lock:
+            return self._bot
+
+    @bot.setter
+    def bot(self, value):
+        with self._lock:
+            self._bot = value
+
     def handle(self, exception):
         with self._lock:
-            if self._chat_id is not None:
+            if self.chat_id is not None:
                 logger.exception(f"Exception in chat {self.chat_id}:\n{exception}")
                 return self.bot.send_message(self.chat_id, f"An error has occurred:\n{exception}\nPlease try again.")
             else:
@@ -62,9 +72,6 @@ class BotFactory:
         # Set the webhook URL
         self.tgbot.set_webhook(url=f'{telegram_chat_url}:8443/{token}/', certificate=domain_certificate, timeout=90)
         # self.tgbot.set_webhook(url=f'{telegram_chat_url}/{token}/', timeout=90)
-
-        # Initiate the exception handler and pass it the bot object to handle messages
-        self.tgbot.exception_handler = ExceptionHandler(self.tgbot)
 
         logger.info(f'Telegram Bot information\n\n{self.tgbot.get_me()}')
 
@@ -126,6 +133,8 @@ class Bot:
     """
     def __init__(self, tgbot):
         self._tgbot = tgbot
+        # Initiate the exception handler and pass it the bot object to handle messages
+        self.exception_handler = ExceptionHandler()
 
     def __getattr__(self, name):
         """
@@ -139,6 +148,7 @@ class Bot:
         By using it this way it maintains context hence when the ExceptionHandler sends a message it's as if it was sent
         by the bot itself.
         """
+        self.exception_handler.bot = self
         self.exception_handler.chat_id = chat_id
         self.exception_handler.handle(exception)
 
