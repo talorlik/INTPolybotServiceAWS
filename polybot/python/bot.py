@@ -19,39 +19,33 @@ class ExceptionHandler(telebot.ExceptionHandler):
     """
     An implementation of the telegram bot exception handler class
     """
-    _lock = threading.Lock()
-
     def __init__(self):
         self._bot = None
         self._chat_id = None
 
     @property
     def chat_id(self):
-        with self._lock:
-            return self._chat_id
+        return self._chat_id
 
     @chat_id.setter
     def chat_id(self, value):
-        with self._lock:
-            self._chat_id = value
+        self._chat_id = value
 
     @property
     def bot(self):
-        with self._lock:
-            return self._bot
+        return self._bot
 
     @bot.setter
     def bot(self, value):
-        with self._lock:
-            self._bot = value
+        self._bot = value
 
     def handle(self, exception):
-        with self._lock:
-            if self.chat_id is not None:
-                logger.exception(f"Exception in chat {self.chat_id}:\n{exception}")
-                return self.bot.send_message(self.chat_id, f"An error has occurred:\n{exception}\nPlease try again.")
-            else:
-                logger.exception(f"Exception occurred without an active chat context.\n{exception}")
+        if self.chat_id is not None:
+            logger.exception(f"Exception in chat {self.chat_id}:\n{exception}")
+            self.bot.send_message(self.chat_id, f"An error has occurred:\n{exception}\nPlease try again.")
+            return True
+
+        logger.exception(f"Exception occurred without an active chat context.\n{exception}")
         return False
 
 class BotFactory:
@@ -133,7 +127,7 @@ class Bot:
     """
     def __init__(self, tgbot):
         self._tgbot = tgbot
-        # Initiate the exception handler and pass it the bot object to handle messages
+        # Initiate the exception handler
         self.exception_handler = ExceptionHandler()
 
     def __getattr__(self, name):
@@ -279,7 +273,7 @@ class ImageProcessingBot(Bot):
         """
         try:
             if not img_path.exists() and img_path.is_file():
-                raise FileNotFoundError("Image doesn't exist or it's not a file. Please try again")
+                raise FileNotFoundError("Image doesn't exist or it's not a file.")
         except FileNotFoundError as e:
             self.handle_exception(e, chat_id)
             return
@@ -307,14 +301,14 @@ class ImageProcessingBot(Bot):
         media_group_id = msg.get("media_group_id", None)
         try:
             if not caption and not media_group_id:
-                raise RuntimeError("Please specify an action you'd like to execute on the image and try again.\nIf you're unsure, please refer to 'help' for assistance and try again.")
+                raise RuntimeError("Please specify an action you'd like to execute on the image.\nIf you're unsure, please refer to 'help' for assistance.")
 
             if caption:
                 if not any(substring in caption for substring in ["blur", "contour", "rotate", "salt and pepper", "concat", "segment"]):
-                    raise ValueError("Invalid image action specified. Please refer to the 'help' for assistance and try again.")
+                    raise ValueError("Invalid image action specified. Please refer to the 'help' for assistance.")
 
                 if "concat" in caption and not media_group_id:
-                    raise RuntimeError("You need to upload more than one image in order to concat. Please try again.")
+                    raise RuntimeError("You need to upload more than one image in order to concat.")
         except ValueError as e:
             self.handle_exception(e, chat_id)
             return
@@ -326,7 +320,7 @@ class ImageProcessingBot(Bot):
 
         try:
             if not image_path:
-                raise Exception("Was unable to download image from Bot. Please try again.")
+                raise Exception("Was unable to download image from Bot.")
 
             img = Img(image_path)
         except Exception as e:
@@ -484,7 +478,7 @@ class ObjectDetectionBot(ImageProcessingBot):
 
             try:
                 if not image_path:
-                    raise Exception("Was unable to download image from Bot. Please try again.")
+                    raise Exception("Was unable to download image from Bot.")
 
                 # Let the user that something is happening
                 self.send_text(chat_id, "Processing, please wait...")
@@ -494,7 +488,7 @@ class ObjectDetectionBot(ImageProcessingBot):
                 response = upload_image_to_s3(images_bucket, f"{images_prefix}/{image_name}", image_path)
 
                 if int(response[1]) != 200:
-                    raise Exception(f"{response[0]}\nPlease try again.")
+                    raise Exception(f"{response[0]}")
 
                 message_dict = {
                     "chatId": str(chat_id),
