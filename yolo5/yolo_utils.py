@@ -168,22 +168,11 @@ def identify(img_name, prediction_id):
 
     logger.info(f'Prediction: {prediction_id}/{img_name}. Done')
 
-    # This is the path for the predicted image with labels
-    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels and possibly confidence scores.
-    predicted_img_path = Path(f'static/data/{prediction_id}/{img_name}')
-
-    # Uploads the predicted image (predicted_img_path) to S3.
-    response = upload_image_to_s3(images_bucket, original_img_path, predicted_img_path)
-
-    if int(response[1]) != 200:
-        logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
-        return f'Prediction: {prediction_id}/{img_name} failed.\n\n{response[0]}', response[1]
-
     # Parse prediction labels and create a summary
     pred_summary_path = Path(f'static/data/{prediction_id}/labels/{img_name.split(".")[0]}.txt')
     if not pred_summary_path.exists():
-        logger.exception(f'Prediction: {prediction_id}/{img_name}. Prediction result not found')
-        return f'Prediction: {prediction_id}/{img_name}. Prediction result not found', 404
+        logger.exception(f'Prediction: {prediction_id}/{img_name} failed. Prediction result not found')
+        return f'Prediction: {prediction_id}/{img_name} failed. Prediction result not found', 404
 
     with pred_summary_path.open(mode='r', encoding='utf-8') as f:
         labels = f.read().splitlines()
@@ -196,6 +185,17 @@ def identify(img_name, prediction_id):
             'height': float(l[4]),
         } for l in labels]
 
+    # This is the path for the predicted image with labels
+    # The predicted image typically includes bounding boxes drawn around the detected objects, along with class labels and possibly confidence scores.
+    predicted_img_path = Path(f'static/data/{prediction_id}/{img_name}')
+
+    # Uploads the predicted image (predicted_img_path) to S3.
+    response = upload_image_to_s3(images_bucket, original_img_path, predicted_img_path)
+
+    if int(response[1]) != 200:
+        logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
+        return f'Prediction: {prediction_id}/{img_name} failed.\n\n{response[0]}', response[1]
+
     prediction_summary = {
         'prediction_id': prediction_id,
         'original_img_path': original_img_path,
@@ -204,7 +204,7 @@ def identify(img_name, prediction_id):
         'time': time.time()
     }
 
-    logger.info(f'Prediction: {prediction_id}/{img_name} was executed successfully.\n\nPrediction summary:\n{prediction_summary}')
+    logger.info(f'Prediction: {prediction_id}/{img_name} was successful.\n\nPrediction summary:\n{prediction_summary}')
     return prediction_summary, 200
 
 def write_to_db(chat_id, prediction_summary):

@@ -6,7 +6,6 @@ import json
 from pathlib import Path
 from telebot.types import InputFile
 from img_proc import Img
-import requests
 from bot_utils import upload_image_to_s3, download_image_from_s3, parse_result, send_to_sqs, get_from_db
 import threading
 
