@@ -3,8 +3,8 @@
 ## Intro
 
 This project is a further expansion on two previous projects:
-1. The <a href="[ImageProcessingService]" title="Python Image processing service" target="_blank">Python Image processing service</a>
-2. The <a href="[PolybotService]" title="Docker Polybot Service" target="_blank">Docker Polybot Service</a>
+1. The <a href="https://github.com/talorlik/ImageProcessingService" title="Python Image processing service" target="_blank">Python Image processing service</a>
+2. The <a href="https://github.com/talorlik/DockerProject" title="Docker Polybot Service" target="_blank">Docker Polybot Service</a>
 
 To fully understand the functionality involved regarding image filtering, image object detection and the integration with Telegram Bot please read about the above projects.
 
@@ -14,15 +14,15 @@ To fully understand the functionality involved regarding image filtering, image 
 2. The services deployed within these subnets communicate to the world via an `Internet Gateway`, `talo-igw`, which is attached on the VPC.
 3. The `Polybot` service runs as a `Docker` container on two `EC2` machines (`t3.micro`), `talo-ec2-polybot-1` and `talo-ec2-polybot-2` respectively (1 in each AZ), behind an `Application Load Balancer (ALB)`, `talo-alb`.
     - I've created a sub-domain, `talo-polybot.int-devops.click` under the main `INT` domain and attached it to the ALB.
-    - I've created a <a href="[SelfSignedCertificate]" title="self-signed certificate" target="_blank">self-signed certificate</a> and attached it to my sub-domain for secure communication with the Telegram API.
+    - I've created a <a href="https://core.telegram.org/bots/webhooks#a-self-signed-certificate" title="self-signed certificate" target="_blank">self-signed certificate</a> and attached it to my sub-domain for secure communication with the Telegram API.
 4. The `Yolo5` service runs as a `Docker` container, starting with a single `EC2` (`t3.medium`) which is instantiated via an `Auto Scaling Group (ASG)`.
     - The ASG is configured to auto scale when the CPU reaches 20% utilization (for testing purposes)
     - The ASG makes use of a `Launch Template (LT)`, `talo-launch-template`, to create the EC2 machines.
-      - The LT uses <a href="[UserData]" title="User Data" target="_blank">User Data</a> to automatically get the latest Docker image from the `ECR` repository `talo-docker-images` and then run the Yolo5 service.
+      - The LT uses <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" title="User Data" target="_blank">User Data</a> to automatically get the latest Docker image from the `ECR` repository `talo-docker-images` and then run the Yolo5 service.
       - The LT is configured to deploy the EC2s inside the above VPC and in the specified subnets.
       - It also makes use of an existing `Key Pair`, `talo-key-pair` for SSH.
       - It uses the same SG as the Polybot's EC2 machines (read below).
-5. There is a `Security Group (SG)` for the ALB `talo-alb-sg` which restricts Inbound traffic to the <a href="[TelegramCIDRs]" title="CIDRs of Telegram servers" target="_blank">CIDRs of Telegram servers</a> on port 8443 only and Outbound to the Security Group of the EC2 machines on port 8443 as well.
+5. There is a `Security Group (SG)` for the ALB `talo-alb-sg` which restricts Inbound traffic to the <a href="https://core.telegram.org/bots/webhooks" title="CIDRs of Telegram servers" target="_blank">CIDRs of Telegram servers</a> on port 8443 only and Outbound to the Security Group of the EC2 machines on port 8443 as well.
 6. The SG for the EC2s, `talo-public-sg` accepts Inbound traffic only from the ALB SG and Outbound to All.
 7. All EC2 machines have Public IP enabled for convenience only, for use with SSH.
 8. A `Secret Manager (SM)` which has two secrets in it: `talo/telegram/token` and `talo/sub-domain/certificate`.
@@ -124,9 +124,4 @@ To fully understand the functionality involved regarding image filtering, image 
   - I'm using the aws_ec2 Ansible plugin to dynamically build the inventory base on Tags that I've assigned to the Polybot and Yolo5 EC2 machines, `APP=talo-polybot` and `APP=talo-yolo5` respectively.
 
 
-[ImageProcessingService]: https://github.com/talorlik/ImageProcessingService
-[PolybotService]: https://github.com/talorlik/DockerProject
-[UserData]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
-[TelegramCIDRs]: https://core.telegram.org/bots/webhooks
-[SelfSignedCertificate]: https://core.telegram.org/bots/webhooks#a-self-signed-certificate
 [architecture]: https://github.com/talorlik/INTPolybotServiceAWS/blob/main/AWS_Project.jpg
