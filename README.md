@@ -1,125 +1,132 @@
-# The Polybot Service: AWS Project
+# The Polybot plus Image processing & detection Service: AWS Project
 
-## Background and goals
+## Intro
 
-In the [previous Docker project][PolybotServiceDocker], you've developed and deployed containerized service which detects objects in images sent through a Telegram chatbot. 
-In addition, your service could effortlessly be launched on any machine using (almost) a single Docker compose command. Great job! 
+This project is a further expansion on two previous projects:
+1. The [Python Image processing service][ImageProcessingService]
+2. The [Docker Polybot Service][PolybotService]
 
-But how services are really deployed in the cloud? What about scalability?
-Consider if your service were to receive 30 images per second - would it effectively handle the load? 
-Additionally, in the event of an accidental virtual machine shutdown, does your service stay available? does it maintain high availability?
+To fully understand the functionality involved regarding image filtering, image object detection and the integration with Telegram Bot please read about the above projects.
 
-In this project, you'll deploy your Polybot Service on AWS following best practices for a well-architected infrastructure.
-You'll utilize the majority of the AWS resources covered in the tutorials, including EC2, VPC, IAM, S3, SQS, DynamoDB, ELB, ASG, Lambda, CloudWatch, and more.
+## AWS Infra
 
-## Preliminaries
+1. A `VPC`, `talo-vpc`, containing two Public Subnets, `talo-public-subnet` and `talo-public-subnet-2` in `us-east-1a` and `us-east-1b` `Availability Zones (AZ)` respectively.
+2. The services deployed within these subnets communicate to the world via an `Internet Gateway`, `talo-igw`, which is attached on the VPC.
+3. The `Polybot` service runs as a `Docker` container on two `EC2` machines (`t3.micro`), `talo-ec2-polybot-1` and `talo-ec2-polybot-2` respectively (1 in each AZ), behind an `Application Load Balancer (ALB)`, `talo-alb`.
+    - I've created a sub-domain, `talo-polybot.int-devops.click` under the main `INT` domain and attached it to the ALB.
+    - I've created a [self-signed certificate][SelfSignedCertificate] and attached it to my sub-domain for secure communication with the Telegram API.
+4. The `Yolo5` service runs as a `Docker` container, starting with a single `EC2` (`t3.medium`) which is instantiated via an `Auto Scaling Group (ASG)`.
+    - The ASG is configured to auto scale when the CPU reaches 20% utilization (for testing purposes)
+    - The ASG makes use of a `Launch Template (LT)`, `talo-launch-template`, to create the EC2 machines.
+      - The LT uses [User Data][UserData] to automatically get the latest Docker image from the `ECR` repository `talo-docker-images` and then run the Yolo5 service.
+      - The LT is configured to deploy the EC2s inside the above VPC and in the specified subnets.
+      - It also makes use of an existing `Key Pair`, `talo-key-pair` for SSH.
+      - It uses the same SG as the Polybot's EC2 machines (read below).
+5. There is a `Security Group (SG)` for the ALB `talo-alb-sg` which restricts Inbound traffic to the [CIDRs of Telegram servers][TelegramCIDRs] on port 8443 only and Outbound to the Security Group of the EC2 machines on port 8443 as well.
+6. The SG for the EC2s, `talo-public-sg` accepts Inbound traffic only from the ALB SG and Outbound to All.
+7. All EC2 machines have Public IP enabled for convenience only, for use with SSH.
+8. A `Secret Manager (SM)` which has two secrets in it: `talo/telegram/token` and `talo/sub-domain/certificate`.
+9. There are two `SQS Queues`, `talo-sqs-identity` and `talo-sqs-results` with which each of the EC2s can put messages into and pull messages from.
+10. A `DynamoDB`, `talo-prediction-results` into which the Image Object Detection results are written and read from.
+11. An `S3 Bucket`, `talo-s3` which holds the images which are to be identified and then the resulted images.
+12. I've created an `IAM Role`, `talo-ec2-role` with an inline policy `talo-ec2-policy` which follows the `Least Privilege` principle and only grants the absolute necessary permissions to the EC2s.
+    - For the Polybot the role is attached to the two machines
+    - for the Yolo5 the role is part of the LT configuration and each machine that is created gets it.
+13. I created an `AMI` which is Ubuntu based and has everything I need already installed. I use this image for the creation of all the EC2s in this project.
 
-1. Fork this repo by clicking **Fork** in the top-right corner of the page. 
-2. Clone your forked repository by:
-   ```bash
-   git clone https://github.com/<your-username>/<your-project-repo-name>
-   ```
-   Change `<your-username>` and `<your-project-repo-name>` according to your GitHub username and the name you gave to your fork. E.g. `git clone https://github.com/johndoe/PolybotServiceAWS`.
-3. Open the repo as a code project in your favorite IDE (Pycharm, VSCode, etc..).
-   It is also a good practice to create an isolated Python virtual environment specifically for your project ([see here how to do it in PyCharm](https://www.jetbrains.com/help/pycharm/creating-virtual-environment.html)).
+![][architecture]
 
-Later on, you are encouraged to change the `README.md` file content to provide relevant information about your service project.
+## Basic Flow
 
-Let's get started...
+1. The user uploads an image on the Telegram App and puts a caption of `predict`.
+2. The Polybot service picks up the message and handles it by instantiating the `ObjectDetectionBot`.
+3. The image is then uploaded to S3 and a message with the `chatId` and `imgName` to the `talo-sqs-identity` SQS Queue.
+4. The Yolo5 service polls the identity SQS Queue for incoming messages. Once a message is picked up, it gets the `imgName`, downloads it from S3 and the detection process kicks in.
+5. The resulted image is uploaded back to S3 and the summary is save to DynamoDB. A message containing either a failure or success details is sent to the `talo-sqs-results` SQS Queue.
+6. The Polybot service polls the results SQS Queue for incoming results messages. Once a message is picked up it gets the `prediction_id`, queries the DynamoDB, gets the output from the prediction, parses the output, gets the image name and downloads it from S3, sends responds back to the user with the image and a readable summary of what was found.
 
-## Infrastructure
+## Directory structure
 
-- If you don't have it yet, create a VPC with at least two public subnets in different AZs.
-- During the project you'll deploy the Polybot Service in EC2 instances. For that, your instances has to have permission on some AWS services (E.g. for example to upload/download photos in S3).
-  The correct way to do it is by attaching an **IAM role** with the required permissions to your EC2 instance. **Don't** use or generate access keys.
+```console
+.
+├── AWS_Project.jpg
+├── LICENSE
+├── README.md
+├── load_test.py
+├── polybot
+│   ├── Dockerfile
+│   ├── __init__.py
+│   ├── ansible
+│   │   ├── ansible.cfg
+│   │   ├── aws_ec2.yaml
+│   │   └── playbook.yaml
+│   ├── pushrefresh.txt
+│   ├── python
+│   │   ├── __init__.py
+│   │   ├── bot.py
+│   │   ├── bot_utils.py
+│   │   ├── flask_app.py
+│   │   ├── img_proc.py
+│   │   ├── process_messages.py
+│   │   ├── process_results.py
+│   │   └── requirements.txt
+│   ├── uwsgi.ini
+│   └── wsgi.py
+└── yolo5
+    ├── Dockerfile
+    ├── ansible
+    │   ├── ansible.cfg
+    │   ├── aws_ec2.yaml
+    │   └── playbook.yaml
+    ├── app.py
+    ├── prediction_cleanup.sh
+    ├── pushrefresh.txt
+    ├── requirements.txt
+    └── yolo_utils.py
+```
 
-> [!WARNING]
-> Never commit AWS credentials into your git repo nor your Docker containers!
+## General Technical Details
 
-## Provision the `polybot` microservice
+### Polybot
 
-![][botaws2]
+* In the Python code I'm using Threading. When the application starts two threads get initiated, one for the Bot to poll the SQS Queue for results and one for the Bot to poll an internal Python Queue for incoming messages from the Telegram app.
+* Both threads are getting a single instance of the bot_factory so that the same bot setup is used in both. Both threads also get the app to maintain context for globally declared values.
+* The secrets i.e. the Telegram Token and Domain Certificate are pulled from AWS Secret Manager and used in the code but are not saved anywhere thus improving security.
+* The Polybot Dockerfile no longer uses the UWSGI server. It now makes use of regular Flask server. The reason for this has to do with my use of threading which didn't work with the UWSGI.
+* The container is run with the `--restart always` flag so that when that machine stops and starts or restarts for some reason, the container will immediately start as well.
 
-- The Polybot microservice should be running in a `micro` EC2 instance. You'll find the code skeleton under `polybot/`. Take a look at it - it's similar to the one used in the previous project, so you can leverage your code implementation from before.
-- The app should be running automatically as the EC2 instances are being started (in case the instance was stopped), **without any manual steps**.      
-  
-  There are many approached to achieve that. As a DevOps engineers, we prefer running the app as a Docker container, and make it run automatically using the `--restart always` flag, or as a Linux service.
-  
-  Furthermore, if you don't want to manually install Docker in each machine, you can utilize [User Data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) or create an AMI from a single instance to replicate the setup across others.
-- The service should be highly available. For that, you'll use an **Application Load Balancer (ALB)** that routes the traffic across the instances located in different AZs. 
-  
-  The ALB must have an **HTTPS** listener, as working with **HTTP** [is not allowed](https://core.telegram.org/bots/webhooks) by Telegram. To use HTTPS you need a TLS certificate. You can get it either by:
-  - [Generate a self-signed certificate](https://core.telegram.org/bots/webhooks#a-self-signed-certificate) and import it to the ALB listener. In that case the certificate `Common Name` (`CN`) must be your ALB domain name (E.g. `test-1369101568.eu-central-1.elb.amazonaws.com`), and you must pass the certificate file when setting the webhook in `bot.py` (i.e. `self.telegram_bot_client.set_webhook(..., certificate=open(CERTIFICATE_FILE_NAME, 'r'))`).
-  
-    Or 
+### Yolo5
 
-  - Create a subdomain in our shared registered domain. In the domain's Hosted Zone, create an **A alias record** that routes traffic to your ALB. In addition, you need to request a public certificate for your domain address. Since the domain has been issued by Amazon, issuing a certificate [can be easily done with AWS Certificate Manager (ACM)](https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html#request-public-console).
-- [Read Telegram's webhook docs](https://core.telegram.org/bots/webhooks) to get the CIDR of Telegram servers. Since your ALB is publicly accessible, it's better to restrict incoming traffic access to the ALB exclusively to Telegram servers by applying inbound rules to the **Security Group**.
-- Your Telegram token is a sensitive data. It should be stored in [AWS Secret Manager](https://docs.aws.amazon.com/secretsmanager/latest/userguide/intro.html). Create a corresponding secret in Secret Manager, under **Secret type** choose **Other type of secret**.
-- Tip: It's recommended to tag your Polybot instances, so they can be identified during the CI/CD pipline that you'll implement later. E.g. `APP=john-polybot`.
+* The yolo5 service no longer uses Flask server to run as it's not only "listening" to incoming messages from the "identify" SQS Queue.
+* I've decoupled the services by introducing an additional SQS Queue so that the Yolo5 doesn't have to make a POST request to the Polybot directly (via the ALB) but rather place a message in the new queue.
+* In order to prevent container bloat, I've created a cleanup bash script which I run as a cron service in the background. It deletes all the prediction files and images that are older than 2 minutes.
+  - I added this to the Dockerfile
+* The container is run with the `--restart always` flag so that when that machine stops and starts or restarts for some reason, the container will immediately start as well.
 
-## Provision the `yolo5` microservice
+> **NOTE:** I've discovered that with the existing architecture the `concat` image filtering functionality doesn't work because for every image in the group Telegram makes an HTTP request causing the ALB to route the second request to the second machine thus making it "loose" state.
+> In order to resolve this some additional component has to be introduced, perhaps Redis or another Table in DynamoDB.
 
-![][botaws3]
+## Testing
 
-- The Yolo5 microservice should be running within a `medium` EC2 instance. The service files can be found under `yolo5/`. In `app.py` you'll find a code skeleton that periodically consumes jobs from an **SQS queue**. 
-- **Polybot -> Yolo5 communication:** When the Polybot microservice receives a message from Telegram servers, it uploads the image to the S3 bucket. 
-    Then, instead of talking directly with the Yolo5 microservice using a simple HTTP request, the bot sends a "job" to an SQS queue.
-    The job message contains information regarding the image to be processed, as well as the Telegram `chat_id`.
-    The Yolo5 microservice acts as a consumer, consumes the jobs from the queue, downloads the image from S3, processes the image, and writes the results to a **DynamoDB table** (instead of MongoDB as done in the previous Docker project. Change your code accordingly).
-- **Yolo5 -> Polybot communication:** After writing the results to DynamoDB, the Yolo5 microservice then sends a `POST` HTTP request to the Yolo5 microservice, to `/results?predictionId=<predictionId>`, while `<predictionId>` is the prediction ID of the job the yolo5 worker has just completed. 
-  The request is done via the ALB domain address, but since this is an internal communication between the `yolo5` and the `polybot` microservices, HTTPS is not necessary here. You should create an HTTP listener in your ALB accordingly, and restrict incoming traffic **to instances from within the same VPC only**.
-  The `/results` endpoint in the Polybot microservice then should retrieve the results from DynamoDB and sends them to the end-user Telegram chat by utilizing the `chat_id` value.
-- The Yolo5 microservice should be **auto-scaled**. For that, all Yolo5 instances would be part of an **Auto-scaling Group**. 
-  Create a Launch Template and Autoscaling Group with **desired capacity 1**, and **maximum capacity of 2** (obviously in real-life application it would be more than 2).
-  The automatic scaling based on **CPU utilization**, with a scaling policy triggered when the CPU utilization reaches **60%**.
-- Similarly to the Polybot, the Yolo5 app should be automatically up and running when an instance is being started as part of the ASG, without any manual steps.
-
-## Test your service scalability
-
-1. Send multiple images to your Telegram bot within a short timeframe to simulate increased traffic.
+1. I created a bash script, `load_test.sh` which sends messages directly to the identity SQS Queue. The images must be pre-loaded to S3 and the image name list must be updated in the script itself. This simulates increased traffic.
 2. Navigate to the **CloudWatch** console, observe the metrics related to CPU utilization for your Yolo5 instances. You should see a noticeable increase in CPU utilization during the period of increased load.
 3. After ~3 minutes, as the CPU utilization crosses the threshold of 60%, **CloudWatch alarms** will be triggered.
    Check your ASG size, you should see that the desired capacity increases in response to the increased load.
 4. After approximately 15 minutes of reduced load, CloudWatch alarms for scale-in will be triggered.
 
-## Integrate a simple CI/CD pipeline
+## CI/CD pipeline with GitHub Actions
 
-We now want to automate the deployment process of the service, both for the Polybot and the Yolo5 microservices.  
-Meaning, when you make code changes locally, then commit and push them, a new version of Docker image is being built and deployed into the designated EC2 instances (either the two instances of the Polybot or all ASG instances of the Yolo5).
-The process has to be **fully automated**. 
-
-While the expected outcome is simple, there are many ways to implement it.
-You are given a skeleton for GitHub Action workflows for the Polybot and the Yolo5 under `.github/workflows/polybot-deployment.yaml` and `.github/workflows/yolo5-deployment.yaml` respectively.
-
-Beyond the provided YAMLs, you are free to design and implement your CI/CD pipeline in any way you see. 
-
-Here are some suggestions:
-
-- **Build phase**: Use GitHub Actions to build and push new version of Docker images to DockerHub or ECR (as done in the previous Docker project).
-- **Build phase**: Use [AWS CodeBuild](https://docs.aws.amazon.com/codebuild/latest/userguide/getting-started-overview.html) to build images. 
-- **Deploy phase**: Create a custom bash script that lists instances of both Polybot and Yolo5 (use tags to do it). For each instance, connect via SSH and execute commands to pull the new version of the Docker image, stop the existing running container, and start the new version of the image.
-- **Deploy phase**: Use [AWS CodeDeploy](https://docs.aws.amazon.com/codedeploy/latest/userguide/welcome.html) to manage the deployment process. 
-- **Deploy phase**: [Create a new Launch Template version](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-launch-template-versions.html) with custom [User Data](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html) to run the new image version when a new instance is being launched. Then, perform an [instance refresh](https://docs.aws.amazon.com/autoscaling/ec2/userguide/asg-instance-refresh.html) to update instances in your ASG.
-
-Test your CI/CD pipline for both the Polybot and Yolo5 microservices.
-
-## Submission
-
-You have to present your work to the course staff, in a **10-15 minutes demo**. Your presentations would be evaluated according to the below list, in order of priority:
-
-1. Showcasing a live, working demo of your work.
-2. Demonstrating deep understanding.
-3. Applying best practices and clean work.
+* I created two GitHub Workflows, one for the Polybot, `.github/workflows/polybot-deployment.yaml` and one for the Yolo5 `.github/workflows/yolo5-deployment.yaml`.
+* Each is triggered upon push action to the `main` branch to their respective directories (`polybot` and `yolo5`)ץ
+* Each consists of two jobs, namely: `Build` and `Deploy`.
+* In the Build job it build a new Docker image and pushes it to the ECR.
+* In the Deploy job I've made use of Ansible to deploy the application's new image on the machines and run the docker container.
+  - I'm using the aws_ec2 Ansible plugin to dynamically build the inventory base on Tags that I've assigned to the Polybot and Yolo5 EC2 machines, `APP=talo-polybot` and `APP=talo-yolo5` respectively.
 
 
-
-# Good Luck
-
-[DevOpsTheHardWay]: https://github.com/alonitac/DevOpsTheHardWay
-[onboarding_tutorial]: https://github.com/alonitac/DevOpsTheHardWay/blob/main/tutorials/onboarding.md
-[github_actions]: ../../actions
-
-[PolybotServiceDocker]: https://github.com/alonitac/PolybotServiceDocker
-[botaws2]: https://alonitac.github.io/DevOpsTheHardWay/img/aws_project_botaws2.png
-[botaws3]: https://alonitac.github.io/DevOpsTheHardWay/img/aws_project_botaws3.png
+[ImageProcessingService]: https://github.com/talorlik/ImageProcessingService
+[PolybotService]: https://github.com/talorlik/DockerProject
+[UserData]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html
+[TelegramCIDRs]: https://core.telegram.org/bots/webhooks
+[SelfSignedCertificate]: https://core.telegram.org/bots/webhooks#a-self-signed-certificate
+[architecture]: https://github.com/talorlik/INTPolybotServiceAWS/blob/main/AWS_Project.jpg

@@ -90,20 +90,21 @@ image_list = [
     "image-47.jpg",
     "image-48.jpg",
     "image-49.jpg",
-    "image-50.jpg",
+    "image-50.jpg"
 ]
 
-for img in image_list:
-    message_dict = {
-        "chatId": str("7101922782"),
-        "imgName": img
-    }
+for _ in range(10):
+    for img in image_list:
+        message_dict = {
+            "chatId": str("7101922782"),
+            "imgName": img
+        }
 
-    # Send message to the identify queue for the Yolo5 service to pick up
-    response = send_to_sqs("talo-sqs-identify", json.dumps(message_dict))
+        # Send message to the identify queue for the Yolo5 service to pick up
+        response = send_to_sqs("talo-sqs-identify", json.dumps(message_dict))
 
-    if int(response[1]) != 200:
-        print(response[0])
-        break
+        if int(response[1]) != 200:
+            print(response[0])
+            break
 
 print("Complete!")
