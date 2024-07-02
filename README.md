@@ -3,8 +3,8 @@
 ## Intro
 
 This project is a further expansion on two previous projects:
-1. The [Python Image processing service][ImageProcessingService]
-2. The [Docker Polybot Service][PolybotService]
+1. The [Python Image processing service](ImageProcessingService)
+2. The [Docker Polybot Service](PolybotService)
 
 To fully understand the functionality involved regarding image filtering, image object detection and the integration with Telegram Bot please read about the above projects.
 
