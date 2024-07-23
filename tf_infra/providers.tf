@@ -28,5 +28,4 @@ terraform {
 */
 provider "aws" {
   region  = var.region
-  profile = var.env == "prod" ? "default" : "dev"
 }
