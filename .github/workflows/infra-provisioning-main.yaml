@@ -38,6 +38,11 @@ jobs:
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-1
+      country: ${{ inputs.country }}
+      state: ${{ inputs.state }}
+      locality: ${{ inputs.locality }}
+      organization: ${{ inputs.organization }}
+      common_name: ${{ inputs.common_name }}
     secrets:
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_1_TELEGRAM_TOKEN }}
 
@@ -46,5 +51,10 @@ jobs:
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-2
+      country: ${{ inputs.country }}
+      state: ${{ inputs.state }}
+      locality: ${{ inputs.locality }}
+      organization: ${{ inputs.organization }}
+      common_name: ${{ inputs.common_name }}
     secrets:
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_2_TELEGRAM_TOKEN }}
