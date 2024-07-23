@@ -1,9 +1,7 @@
 name: TF Backend State Provisioning
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   InfraProvision:
