@@ -13,7 +13,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 3.1.1
+          terraform_version: 1.9.2
 
       - name: Destroy Configuration
         working-directory: ./tf_backend_state

@@ -27,5 +27,5 @@ terraform {
  You can use multiple provider blocks in your Terraform configuration to manage resources from different providers.
 */
 provider "aws" {
-  region  = var.region
+  region = var.region
 }

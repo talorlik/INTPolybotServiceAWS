@@ -29,7 +29,7 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
-          terraform_version: 3.1.1
+          terraform_version: 1.9.2
 
       - name: Infrastructure destroying
         if: ${{ github.event.inputs[ matrix.region ] == 'true' }}
@@ -39,7 +39,8 @@ jobs:
           terraform init
 
           # select workspace or create if needed
-          terraform workspace select ${{ matrix.region }}  || terraform workspace new ${{ matrix.region }}
+          terraform workspace select ${{ matrix.region }} || terraform workspace new ${{ matrix.region }}
 
           # tf destroy
-          terraform destroy -auto-approve -var-file=${{ matrix.region }}
+          terraform plan -var-file="region.${{ matrix.region }}.tfvars" -destroy -out region.${{ matrix.region }}.tfplan
+          terraform apply -auto-approve region.${{ matrix.region }}.tfplan
