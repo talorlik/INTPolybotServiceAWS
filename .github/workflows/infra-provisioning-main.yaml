@@ -44,6 +44,8 @@ jobs:
       organization: ${{ inputs.organization }}
       common_name: ${{ inputs.common_name }}
     secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_1_TELEGRAM_TOKEN }}
 
   us-east-2:
@@ -57,4 +59,6 @@ jobs:
       organization: ${{ inputs.organization }}
       common_name: ${{ inputs.common_name }}
     secrets:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_2_TELEGRAM_TOKEN }}
