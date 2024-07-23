@@ -1,0 +1,98 @@
+name: Polybot Infrastructure Terraform Specific Region
+
+on:
+  workflow_call:
+    inputs:
+      region-code:
+        required: true
+        type: string
+      country:
+        required: true
+        type: string
+        default: US
+      state:
+        required: true
+        type: string
+        default: Virginia
+      locality:
+        required: true
+        type: string
+        default: Virginia Beach
+      organization:
+        required: true
+        type: string
+        default: Talo Polybot
+      common_name:
+        required: true
+        type: string
+        default: talo-polybot.int-devops.click
+    secrets:
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
+        required: true
+      TELEGRAM_TOKEN:
+        required: true
+
+jobs:
+  Terraform:
+    runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    defaults:
+      run:
+        working-directory: ./tf_infra
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 3.1.1
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform workspace select
+        run: terraform workspace select ${{ inputs.region-code }} || terraform workspace new ${{ inputs.region-code }}
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan
+        run: |
+          terraform plan -var-file=region.${{ inputs.region-code }}.tfvars -var "telegram_token_value=${{ secrets.TELEGRAM_TOKEN }}" -var "country=${{ inputs.country }}" -var "state=${{ inputs.state }}" -var "locality=${{ inputs.locality }}" -var "organization=${{ inputs.organization }}" -var "common_name=${{ inputs.common_name }}" -out region.${{ inputs.region-code }}.tfplan
+
+      - name: Terraform apply
+        run: |
+          terraform apply -auto-approve region.${{ inputs.region-code }}.tfplan
+
+      - name: Get Terraform Output
+        id: output
+        run: |
+          echo "PEM_FILE_PATH=$(terraform output -raw pem_file_path)" >> $GITHUB_ENV
+          echo "PUB_FILE_PATH=$(terraform output -raw pub_file_path)" >> $GITHUB_ENV
+          echo "REGION=$(terraform output -raw region)" >> $GITHUB_ENV
+          echo "ENV=$(terraform output -raw env)" >> $GITHUB_ENV
+          echo "FILE_NAME=$(terraform output -raw key_pair_name)" >> $GITHUB_ENV
+          terraform output -json > tf-outputs.json
+
+      - name: Upload Private Key as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.REGION }}/${{ env.ENV }}/${{ env.FILE_NAME }}.pem
+          path: ${{ env.PEM_FILE_PATH }}
+
+      - name: Upload Public Key as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.REGION }}/${{ env.ENV }}/${{ env.FILE_NAME }}.pub
+          path: ${{ env.PUB_FILE_PATH }}
+
+      - name: Upload Terraform Outputs as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.REGION }}/${{ env.ENV }}/tf-outputs.json
+          path: tf-outputs.json

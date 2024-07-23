@@ -9,14 +9,18 @@ from process_messages import ProcessMessages
 app = Flask(__name__, static_url_path='')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
-response = get_secret_value('us-east-1', 'talo/telegram/token', 'TELEGRAM_TOKEN')
+REGION_NAME       = os.environ['AWS_DEFAULT_REGION']
+TELEGRAM_APP_URL  = os.environ['TELEGRAM_APP_URL']
+TELEGRAM_SECRET   = os.environ['TELEGRAM_SECRET']
+SUB_DOMAIN_SECRET = os.environ['SUB_DOMAIN_SECRET']
+
+response = get_secret_value(REGION_NAME, TELEGRAM_SECRET, 'TELEGRAM_TOKEN')
 if int(response[1]) != 200:
     raise ValueError(response[0])
 
 TELEGRAM_TOKEN = response[0]
-TELEGRAM_APP_URL = os.environ['TELEGRAM_APP_URL']
 
-response = get_secret_value('us-east-1', 'talo/sub-domain/certificate')
+response = get_secret_value(REGION_NAME, SUB_DOMAIN_SECRET)
 if int(response[1]) != 200:
     raise ValueError(response[0])
 

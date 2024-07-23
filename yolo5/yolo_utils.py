@@ -8,8 +8,9 @@ import yaml
 import os
 from bson import ObjectId
 
-images_bucket = os.environ['BUCKET_NAME']
-images_prefix = os.environ['BUCKET_PREFIX']
+IMAGES_BUCKET = os.environ['BUCKET_NAME']
+IMAGES_PREFIX = os.environ['BUCKET_PREFIX']
+TABLE_NAME    = os.environ['TABLE_NAME']
 
 aws_profile = os.getenv("AWS_PROFILE", None)
 if aws_profile is not None and aws_profile == "dev":
@@ -90,8 +91,8 @@ def upload_image_to_s3(bucket_name, key, image_path):
     return f"Upload to {bucket_name}/{key} succeeded.", 200
 
 def download_image_from_s3(bucket_name, key, image_path):
-    if not os.path.exists(images_prefix):
-        os.makedirs(images_prefix)
+    if not os.path.exists(IMAGES_PREFIX):
+        os.makedirs(IMAGES_PREFIX)
 
     try:
         s3_client = boto3.client('s3')
@@ -147,10 +148,10 @@ def identify(img_name, prediction_id):
         return f'Prediction: {prediction_id}/{img_name}. No image parameter was passed or is empty.', 500
 
     # The bucket name and prefix are provided as env variables BUCKET_NAME and BUCKET_PREFIX respectively.
-    original_img_path = images_prefix + "/" + img_name
+    original_img_path = IMAGES_PREFIX + "/" + img_name
 
     # Download img_name from S3 and store it to a local path from the original_img_path variable.
-    response = download_image_from_s3(images_bucket, original_img_path, original_img_path)
+    response = download_image_from_s3(IMAGES_BUCKET, original_img_path, original_img_path)
 
     if int(response[1]) != 200:
         logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
@@ -190,7 +191,7 @@ def identify(img_name, prediction_id):
     predicted_img_path = Path(f'static/data/{prediction_id}/{img_name}')
 
     # Uploads the predicted image (predicted_img_path) to S3.
-    response = upload_image_to_s3(images_bucket, original_img_path, predicted_img_path)
+    response = upload_image_to_s3(IMAGES_BUCKET, original_img_path, predicted_img_path)
 
     if int(response[1]) != 200:
         logger.exception(f'Prediction: {prediction_id}/{img_name} failed.')
@@ -238,7 +239,7 @@ def write_to_db(chat_id, prediction_summary):
         }
 
         response = dynamodb_client.put_item(
-            TableName='talo-prediction-results',
+            TableName=TABLE_NAME,
             Item=data,
             ReturnConsumedCapacity='TOTAL',
             ReturnItemCollectionMetrics='SIZE',

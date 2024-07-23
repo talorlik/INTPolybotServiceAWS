@@ -1,0 +1,28 @@
+name: TF Backend State Provisioning
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  InfraProvision:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo code
+        uses: actions/checkout@v2
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 3.1.1
+
+      - name: Apply Configuration
+        working-directory: ./tf_backend_state
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          terraform init
+          terraform plan -var-file="prod.tfvars" -out terraform.tfplan
+          terraform apply -auto-approve terraform.tfplan

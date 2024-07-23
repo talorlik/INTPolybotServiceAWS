@@ -1,68 +1,156 @@
 name: Yolo5 Microservice Deployment
 
 on:
-  push:
-    paths:
-      - 'yolo5/**'
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      account:
+        description: 'Select AWS Account'
+        required: true
+        type: choice
+        default: '019273956931'
+        options:
+          - '019273956931'
+      region:
+        description: 'Select AWS Region'
+        required: true
+        type: choice
+        default: 'us-east-1: N. Virginia'
+        options:
+          - 'us-east-1: N. Virginia'
+          - 'us-east-2: Ohio'
+      environment:
+        description: 'Select Environment'
+        required: true
+        type: choice
+        default: 'prod'
+        options:
+          - 'prod'
+          - 'dev'
 
 jobs:
-  Build:
+  SetGlobals:
     runs-on: ubuntu-latest
+    outputs:
+      region_code: ${{ steps.set_region.outputs.region_code }}
+      sqs_queue_identify: ${{ steps.set_values.outputs.sqs_queue_identify }}
+      sqs_queue_results: ${{ steps.set_values.outputs.sqs_queue_results }}
+      bucket_name: ${{ steps.set_values.outputs.bucket_name }}
+      bucket_prefix: ${{ steps.set_values.outputs.bucket_prefix }}
+      table_name: ${{ steps.set_values.outputs.table_name }}
+      ecr_repository_url: ${{ steps.set_values.outputs.ecr_repository_url }}
+      image_prefix: ${{ steps.set_values.outputs.image_prefix }}
+      key_pair_name: ${{ steps.set_values.outputs.key_pair_name }}
+    steps:
+      - name: Check and Install jq
+        run: |
+          if ! command -v jq &> /dev/null
+          then
+            echo "jq could not be found. Installing jq..."
+            sudo apt-get update
+            sudo apt-get install -y jq
+          else
+            echo "jq is already installed."
+          fi
+
+      - name: Set Region
+        id: set_region
+        run: |
+          SELECTED_REGION="${{ inputs.region }}"
+          echo "region_code=${SELECTED_REGION%%:*}" >> $GITHUB_OUTPUT
+
+      - name: Download Output JSON file
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ steps.set_region.outputs.region_code }}/${{ inputs.environment }}/tf-outputs.json
+          path: ${{ github.workspace }}
+
+      - name: Extract outputs from file and set as environment variables
+        id: set_values
+        run: |
+          echo "sqs_queue_identify=$(jq -r '.identify_queue_name' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "sqs_queue_results=$(jq -r '.results_queue_name' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "bucket_name=$(jq -r '.s3_bucket_name' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "bucket_prefix=$(jq -r '.s3_bucket_prefix' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "table_name=$(jq -r '.table_name' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "ecr_repository_url=$(jq -r '.ecr_repository_url' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "image_prefix=$(jq -r '.yolo5_image_prefix' tf-outputs.json)" >> $GITHUB_OUTPUT
+          echo "key_pair_name=$(jq -r '.key_pair_name' tf-outputs.json)" >> $GITHUB_OUTPUT
+
+  Build:
+    runs-on: ubuntu-
+    needs:
+      - SetGlobals
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ needs.SetGlobals.outputs.region_code }}
+      ECR_REPOSITORY_URL: ${{ needs.SetGlobals.outputs.ecr_repository_url }}
+      IMAGE_AND_TAG: "${{ needs.SetGlobals.outputs.image_prefix }}:${{ github.run_number }}"
+      IMAGE_PLUS_TAG: "${{ needs.SetGlobals.outputs.image_prefix }}-${{ github.run_number }}"
     steps:
       - name: Checkout the repo code
         uses: actions/checkout@v2
 
       - name: Build and push image
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: 'us-east-1'
         run: |
           cd yolo5
 
-          # Login to ECR (commend in in case you use ECR, change region code and ECR URI):
-          aws ecr get-login-password --region ${{ env.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin 019273956931.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com
-
-          # Define the base name of the image and the tag separately
-          IMAGE_BASE_NAME=yolo5-v2
-          IMAGE_TAG=${{ github.run_number }}
+          # Login to ECR:
+          aws ecr get-login-password --region ${{ env.AWS_DEFAULT_REGION }} | docker login --username AWS --password-stdin ${{ inputs.account }}.dkr.ecr.${{ env.AWS_DEFAULT_REGION }}.amazonaws.com
 
           # Build the image
-          docker build -t ${IMAGE_BASE_NAME}:${IMAGE_TAG} .
+          docker build -t ${{ env.IMAGE_AND_TAG }} .
 
           # Tag the image for ECR
-          docker tag ${IMAGE_BASE_NAME}:${IMAGE_TAG} 019273956931.dkr.ecr.us-east-1.amazonaws.com/talo-docker-images:${IMAGE_BASE_NAME}-${IMAGE_TAG}
+          docker tag ${{ env.IMAGE_AND_TAG }} ${{ env.ECR_REPOSITORY_URL }}:${{ env.IMAGE_PLUS_TAG }}
 
           # Push the image to ECR
-          docker push 019273956931.dkr.ecr.us-east-1.amazonaws.com/talo-docker-images:${IMAGE_BASE_NAME}-${IMAGE_TAG}
+          docker push ${{ env.ECR_REPOSITORY_URL }}:${{ env.IMAGE_PLUS_TAG }}
 
   Deploy:
     name: Deploy Latest Yolo5 Docker Container
     runs-on: ubuntu-latest
     needs:
+      - SetGlobals
       - Build
+    env:
+      ARTIFACT_PATH: ${{ needs.SetGlobals.outputs.region_code }}/${{ inputs.environment }}
+      LOCAL_PATH: /home/runner/.ssh
+      PEM_FILE_NAME: ${{ needs.SetGlobals.outputs.key_pair_name }}.pem
     steps:
       - name: Install Ansible and boto3
         run: |
           python -m pip install --upgrade pip
           pip install ansible boto3
 
-      - name: Create SSH key file
+      - name: Download SSH Key
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.ARTIFACT_PATH }}/${{ env.PEM_FILE_NAME }}
+          path: ${{ env.LOCAL_PATH }}
+
+      - name: Set permissions for SSH Key and Directory
         run: |
-          mkdir -p /home/runner/.ssh
-          echo "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > /home/runner/.ssh/id_rsa.pem
-          chmod 400 /home/runner/.ssh/id_rsa.pem
+          chmod 400 ${{ env.LOCAL_PATH }}/${{ env.PEM_FILE_NAME }}
+          chmod 700 ${{ env.LOCAL_PATH }}
 
       - name: Checkout the repo code
         uses: actions/checkout@v2
 
       - name: Run Ansible Playbook
         env:
+          AWS_ACCOUNT: ${{ inputs.account }}
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: 'us-east-1'
+          AWS_REGION: ${{ needs.SetGlobals.outputs.region_code }}
+          SQS_QUEUE_IDENTIFY: ${{ needs.SetGlobals.outputs.sqs_queue_identify }}
+          SQS_QUEUE_RESULTS: ${{ needs.SetGlobals.outputs.sqs_queue_results }}
+          BUCKET_NAME: ${{ needs.SetGlobals.outputs.bucket_name }}
+          BUCKET_PREFIX: ${{ needs.SetGlobals.outputs.bucket_prefix }}
+          TABLE_NAME: ${{ needs.SetGlobals.outputs.table_name }}
+          ECR_REPOSITORY_URL: ${{ needs.SetGlobals.outputs.ecr_repository_url }}
+          IMAGE_PREFIX: ${{ needs.SetGlobals.outputs.image_prefix }}
+          GITHUB_RUN_NUMBER: ${{ github.run_number }}
         working-directory: ${{ github.workspace }}/yolo5/ansible
         run: |
-          ansible-playbook -i aws_ec2.yaml playbook.yaml --private-key /home/runner/.ssh/id_rsa.pem --extra-vars "github_run_number=${{ github.run_number }}"
+          ansible-playbook -i aws_ec2.yaml playbook.yaml --private-key ${{ env.LOCAL_PATH }}/${{ env.PEM_FILE_NAME }}"

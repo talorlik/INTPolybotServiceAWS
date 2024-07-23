@@ -26,7 +26,7 @@ To fully understand the functionality involved regarding image filtering, image 
 6. The SG for the EC2s, `talo-public-sg` accepts Inbound traffic only from the ALB SG and Outbound to All.
 7. All EC2 machines have Public IP enabled for convenience only, for use with SSH.
 8. A `Secret Manager (SM)` which has two secrets in it: `talo/telegram/token` and `talo/sub-domain/certificate`.
-9. There are two `SQS Queues`, `talo-sqs-identity` and `talo-sqs-results` with which each of the EC2s can put messages into and pull messages from.
+9. There are two `SQS Queues`, `talo-sqs-identify` and `talo-sqs-results` with which each of the EC2s can put messages into and pull messages from.
 10. A `DynamoDB`, `talo-prediction-results` into which the Image Object Detection results are written and read from.
 11. An `S3 Bucket`, `talo-s3` which holds the images which are to be identified and then the resulted images.
 12. I've created an `IAM Role`, `talo-ec2-role` with an inline policy `talo-ec2-policy` which follows the `Least Privilege` principle and only grants the absolute necessary permissions to the EC2s.
@@ -40,8 +40,8 @@ To fully understand the functionality involved regarding image filtering, image 
 
 1. The user uploads an image on the Telegram App and puts a caption of `predict`.
 2. The Polybot service picks up the message and handles it by instantiating the `ObjectDetectionBot`.
-3. The image is then uploaded to S3 and a message with the `chatId` and `imgName` to the `talo-sqs-identity` SQS Queue.
-4. The Yolo5 service polls the identity SQS Queue for incoming messages. Once a message is picked up, it gets the `imgName`, downloads it from S3 and the detection process kicks in.
+3. The image is then uploaded to S3 and a message with the `chatId` and `imgName` to the `talo-sqs-identify` SQS Queue.
+4. The Yolo5 service polls the identify SQS Queue for incoming messages. Once a message is picked up, it gets the `imgName`, downloads it from S3 and the detection process kicks in.
 5. The resulted image is uploaded back to S3 and the summary is save to DynamoDB. A message containing either a failure or success details is sent to the `talo-sqs-results` SQS Queue.
 6. The Polybot service polls the results SQS Queue for incoming results messages. Once a message is picked up it gets the `prediction_id`, queries the DynamoDB, gets the output from the prediction, parses the output, gets the image name and downloads it from S3, sends responds back to the user with the image and a readable summary of what was found.
 
@@ -108,7 +108,7 @@ To fully understand the functionality involved regarding image filtering, image 
 
 ## Testing
 
-1. I created a bash script, `load_test.sh` which sends messages directly to the identity SQS Queue. The images must be pre-loaded to S3 and the image name list must be updated in the script itself. This simulates increased traffic.
+1. I created a bash script, `load_test.sh` which sends messages directly to the identify SQS Queue. The images must be pre-loaded to S3 and the image name list must be updated in the script itself. This simulates increased traffic.
 2. Navigate to the **CloudWatch** console, observe the metrics related to CPU utilization for your Yolo5 instances. You should see a noticeable increase in CPU utilization during the period of increased load.
 3. After ~3 minutes, as the CPU utilization crosses the threshold of 60%, **CloudWatch alarms** will be triggered.
    Check your ASG size, you should see that the desired capacity increases in response to the increased load.

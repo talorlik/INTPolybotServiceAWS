@@ -4,17 +4,26 @@
   vars:
     ansible_user: ubuntu
   tasks:
-    - name: Get AWS_ACCESS_KEY_ID from environment
+    - name: Get values from environment
       set_fact:
+        aws_account: "{{ lookup('env', 'AWS_ACCOUNT') }}"
         aws_region: "{{ lookup('env', 'AWS_REGION') }}"
+        sqs_queue_identify: "{{ lookup('env', 'AWS_REGION') }}"
+        sqs_queue_results: "{{ lookup('env', 'AWS_REGION') }}"
+        bucket_name: "{{ lookup('env', 'AWS_REGION') }}"
+        bucket_prefix: "{{ lookup('env', 'AWS_REGION') }}"
+        table_name: "{{ lookup('env', 'AWS_REGION') }}"
+        ecr_repository_url: "{{ lookup('env', 'ECR_REPOSITORY_URL') }}"
+        image_prefix: "{{ lookup('env', 'IMAGE_PREFIX') }}"
+        github_run_number: "{{ lookup('env', 'GITHUB_RUN_NUMBER') }}"
 
     - name: Login to Amazon ECR
       shell: |
-        aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin 019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com
+        aws ecr get-login-password --region {{ aws_region }} | docker login --username AWS --password-stdin {{ aws_account }}.dkr.ecr.{{ aws_region }}.amazonaws.com
 
     - name: Pull latest Docker image
       docker_image:
-        name: "019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com/talo-docker-images:yolo5-v2-{{ github_run_number }}"
+        name: "{{ ecr_repository_url }}:{{ image_prefix }}-{{ github_run_number }}"
         source: pull
 
     - name: Stop and remove existing container
@@ -25,15 +34,15 @@
     - name: Run new container
       docker_container:
         name: yolo5
-        image: "019273956931.dkr.ecr.{{ aws_region }}.amazonaws.com/talo-docker-images:yolo5-v2-{{ github_run_number }}"
+        image: "{{ ecr_repository_url }}:{{ image_prefix }}-{{ github_run_number }}"
         state: started
         published_ports:
           - "8081:8081"
         env:
           AWS_DEFAULT_REGION: "{{ aws_region }}"
-          TELEGRAM_APP_URL: "https://talo-polybot.int-devops.click"
-          SQS_QUEUE_IDENTIFY: "talo-sqs-identify"
-          SQS_QUEUE_RESULTS: "talo-sqs-results"
-          BUCKET_NAME: "talo-s3"
-          BUCKET_PREFIX: "images"
+          SQS_QUEUE_IDENTIFY: "{{ sqs_queue_identify }}"
+          SQS_QUEUE_RESULTS: "{{ sqs_queue_results }}"
+          BUCKET_NAME: "{{ bucket_name }}"
+          BUCKET_PREFIX: "{{ bucket_prefix }}"
+          TABLE_NAME: "{{ table_name }}"
         restart_policy: always

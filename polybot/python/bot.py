@@ -9,10 +9,9 @@ from img_proc import Img
 from bot_utils import upload_image_to_s3, download_image_from_s3, parse_result, send_to_sqs, get_from_db
 import threading
 
-images_bucket = os.environ['BUCKET_NAME']
-images_prefix = os.environ['BUCKET_PREFIX']
-queue_identify = os.environ['SQS_QUEUE_IDENTIFY']
-queue_results = os.environ['SQS_QUEUE_RESULTS']
+IMAGES_BUCKET  = os.environ['BUCKET_NAME']
+IMAGES_PREFIX  = os.environ['BUCKET_PREFIX']
+QUEUE_IDENTIFY = os.environ['SQS_QUEUE_IDENTIFY']
 
 class ExceptionHandler(telebot.ExceptionHandler):
     """
@@ -456,7 +455,7 @@ class ObjectDetectionBot(ImageProcessingBot):
                 if int(response_data[1]) != 200:
                     raise Exception(response_data[0])
 
-                response = download_image_from_s3(images_bucket, response_data[0]["originalImgPath"], response_data[0]["originalImgPath"], images_prefix)
+                response = download_image_from_s3(IMAGES_BUCKET, response_data[0]["originalImgPath"], response_data[0]["originalImgPath"], IMAGES_PREFIX)
 
                 if int(response[1]) != 200:
                     raise Exception(response[0])
@@ -484,7 +483,7 @@ class ObjectDetectionBot(ImageProcessingBot):
 
                 image_name = os.path.basename(image_path)
 
-                response = upload_image_to_s3(images_bucket, f"{images_prefix}/{image_name}", image_path)
+                response = upload_image_to_s3(IMAGES_BUCKET, f"{IMAGES_PREFIX}/{image_name}", image_path)
 
                 if int(response[1]) != 200:
                     raise Exception(f"{response[0]}")
@@ -495,7 +494,7 @@ class ObjectDetectionBot(ImageProcessingBot):
                 }
 
                 # Send message to the identify queue for the Yolo5 service to pick up
-                response = send_to_sqs(queue_identify, json.dumps(message_dict))
+                response = send_to_sqs(QUEUE_IDENTIFY, json.dumps(message_dict))
 
                 if int(response[1]) != 200:
                     raise Exception(response[0])

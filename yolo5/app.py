@@ -4,15 +4,15 @@ import os
 import json
 from loguru import logger
 
-region_name = os.environ['AWS_DEFAULT_REGION']
-queue_identify = os.environ['SQS_QUEUE_IDENTIFY']
-queue_results = os.environ['SQS_QUEUE_RESULTS']
+REGION_NAME = os.environ['AWS_DEFAULT_REGION']
+QUEUE_IDENTIFY = os.environ['SQS_QUEUE_IDENTIFY']
+QUEUE_RESULTS = os.environ['SQS_QUEUE_RESULTS']
 
-sqs_client = boto3.client('sqs', region_name=region_name)
+sqs_client = boto3.client('sqs', region_name=REGION_NAME)
 
 def consume():
     while True:
-        response = sqs_client.receive_message(QueueUrl=queue_identify, MaxNumberOfMessages=1, WaitTimeSeconds=5)
+        response = sqs_client.receive_message(QueueUrl=QUEUE_IDENTIFY, MaxNumberOfMessages=1, WaitTimeSeconds=5)
 
         if 'Messages' in response:
             message = json.loads(response['Messages'][0]['Body'])
@@ -54,12 +54,12 @@ def consume():
                         logger.exception(response[0])
 
             # Delete the message from the queue as the job is considered as DONE
-            sqs_client.delete_message(QueueUrl=queue_identify, ReceiptHandle=receipt_handle)
+            sqs_client.delete_message(QueueUrl=QUEUE_IDENTIFY, ReceiptHandle=receipt_handle)
 
             message_response["message"]["status_code"] = response[1]
             message_response["message"]["text"] = response[0]
 
-            response = send_to_sqs(queue_results, json.dumps(message_response))
+            response = send_to_sqs(QUEUE_RESULTS, json.dumps(message_response))
 
             if int(response[1]) != 200:
                 logger.exception(response[0])

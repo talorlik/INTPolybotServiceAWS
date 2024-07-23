@@ -10,6 +10,8 @@ aws_profile = os.getenv("AWS_PROFILE", None)
 if aws_profile is not None and aws_profile == "dev":
     boto3.setup_default_session(profile_name=aws_profile)
 
+TABLE_NAME = os.environ['TABLE_NAME']
+
 def get_secret_value(region_name, secret_name, key_name=None):
     try:
         secret_manager = boto3.client('secretsmanager', region_name)
@@ -192,7 +194,7 @@ def get_from_db(prediction_id):
 
     try:
         response = dynamodb_client.get_item(
-            TableName='talo-prediction-results',
+            TableName=TABLE_NAME,
             Key={
                 'predictionId': {'S': prediction_id}
             }
