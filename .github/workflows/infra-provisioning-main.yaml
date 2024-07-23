@@ -34,7 +34,7 @@ on:
 
 jobs:
   us-east-1:
-    if: ${{ inputs.us-east-1 == 'true' }}
+    if: ${{ github.event.inputs.us-east-1 == 'true' }}
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-1
@@ -49,7 +49,7 @@ jobs:
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_1_TELEGRAM_TOKEN }}
 
   us-east-2:
-    if: ${{ inputs.us-east-2 == 'true' }}
+    if: ${{ github.event.inputs.us-east-2 == 'true' }}
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-2
