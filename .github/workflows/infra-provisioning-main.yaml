@@ -11,10 +11,30 @@ on:
         description: 'Ohio (us-east-2)'
         required: false
         type: boolean
+      country:
+        required: true
+        type: string
+        default: US
+      state:
+        required: true
+        type: string
+        default: Virginia
+      locality:
+        required: true
+        type: string
+        default: Virginia Beach
+      organization:
+        required: true
+        type: string
+        default: Talo Polybot
+      common_name:
+        required: true
+        type: string
+        default: talo-polybot.int-devops.click
 
 jobs:
   us-east-1:
-    if: ${{ github.event.inputs.us-east-1 == 'true' }}
+    if: ${{ inputs.us-east-1 == 'true' }}
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-1
@@ -22,7 +42,7 @@ jobs:
       TELEGRAM_TOKEN: ${{ secrets.US_EAST_1_TELEGRAM_TOKEN }}
 
   us-east-2:
-    if: ${{ github.event.inputs.us-east-2 == 'true' }}
+    if: ${{ inputs.us-east-2 == 'true' }}
     uses: ./.github/workflows/infra-provisioning-region.yaml
     with:
       region-code: us-east-2

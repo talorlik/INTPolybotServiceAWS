@@ -6,26 +6,22 @@ on:
       region-code:
         required: true
         type: string
+        default: us-east-1
       country:
         required: true
         type: string
-        default: US
       state:
         required: true
         type: string
-        default: Virginia
       locality:
         required: true
         type: string
-        default: Virginia Beach
       organization:
         required: true
         type: string
-        default: Talo Polybot
       common_name:
         required: true
         type: string
-        default: talo-polybot.int-devops.click
     secrets:
       AWS_ACCESS_KEY_ID:
         required: true
