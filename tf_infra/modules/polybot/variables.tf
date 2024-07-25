@@ -67,6 +67,12 @@ variable "alb_name" {
   default     = "alb"
 }
 
+variable "alb_listener_name" {
+  description = "The Name of the ALB Listener"
+  type        = string
+  default     = "alb-listener"
+}
+
 variable "vpc_id" {
   description = "The VPC ID into which to deploy the resources"
   type        = string
@@ -171,8 +177,8 @@ variable "alb_target_groups" {
     port                              = number
     target_type                       = string
     deregistration_delay              = number
-    load_balancing_algorithm_type     = string
-    load_balancing_anomaly_mitigation = string
+    load_balancing_algorithm_type     = optional(string)
+    load_balancing_anomaly_mitigation = optional(string)
     load_balancing_cross_zone_enabled = bool
     health_check                      = object({
       enabled             = bool

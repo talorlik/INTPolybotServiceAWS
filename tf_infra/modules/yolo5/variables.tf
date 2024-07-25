@@ -222,7 +222,7 @@ variable "min_size" {
 variable "max_size" {
   description = "The Max number of instances allowed"
   type        = number
-  default     = 2
+  default     = 3
 }
 
 variable "health_check_type" {

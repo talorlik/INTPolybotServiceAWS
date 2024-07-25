@@ -1,8 +1,9 @@
 locals {
-  alb_name        = "${var.prefix}-${var.alb_name}-${var.env}"
-  alb_sg_name     = "${var.prefix}-${var.alb_sg_name}-${var.env}"
-  tg_name         = "${var.prefix}-${var.tg_name}-${var.env}"
-  polybot_sg_name = "${var.prefix}-${var.polybot_sg_name}-${var.env}"
+  alb_name          = "${var.prefix}-${var.alb_name}-${var.env}"
+  alb_listener_name = "${var.prefix}-${var.alb_listener_name}-${var.env}"
+  alb_sg_name       = "${var.prefix}-${var.alb_sg_name}-${var.env}"
+  tg_name           = "${var.prefix}-${var.tg_name}-${var.env}"
+  polybot_sg_name   = "${var.prefix}-${var.polybot_sg_name}-${var.env}"
 }
 resource "aws_instance" "polybot_ec2" {
   for_each = { for az in var.azs : az => az }
@@ -62,6 +63,12 @@ module "alb" {
     ip_protocol                  = v.ip_protocol
     referenced_security_group_id = var.referenced_security_group_id
   } }
+  security_group_tags = merge(
+    {
+      Name = local.alb_sg_name
+    },
+    var.tags
+  )
 
   client_keep_alive = var.client_keep_alive
 
@@ -72,6 +79,12 @@ module "alb" {
     forward         = {
       target_group_key = v.forward.target_group_key
     }
+    tags = merge(
+      {
+        Name = local.alb_listener_name
+      },
+      var.tags
+    )
   } }
 
   target_groups = { for k, v in var.alb_target_groups : k => {
@@ -82,10 +95,9 @@ module "alb" {
     port                              = v.port
     target_type                       = v.target_type
     deregistration_delay              = v.deregistration_delay
-    load_balancing_algorithm_type     = v.load_balancing_algorithm_type
-    load_balancing_anomaly_mitigation = v.load_balancing_anomaly_mitigation
+    load_balancing_algorithm_type     = try(v.load_balancing_algorithm_type, null)
+    load_balancing_anomaly_mitigation = try(v.load_balancing_anomaly_mitigation, null)
     load_balancing_cross_zone_enabled = v.load_balancing_cross_zone_enabled
-    availability_zone                 = var.azs[0]
 
     health_check = {
       enabled             = v.health_check.enabled
@@ -112,8 +124,14 @@ module "alb" {
     target_id         = local.instance_ids[1].id
     target_type       = v.target_type
     port              = v.port
-    availability_zone = var.azs[1]
   } }
+
+  tags = merge(
+    {
+      Name = local.alb_name
+    },
+    var.tags
+  )
 }
 
 resource "aws_security_group" "polybot_ec2_sg" {

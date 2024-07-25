@@ -55,6 +55,26 @@ output "sub_domain_name" {
   value = module.sub_domain_and_cert.sub_domain_name
 }
 
+output "country" {
+  value = module.sub_domain_and_cert.country
+}
+
+output "state" {
+  value = module.sub_domain_and_cert.state
+}
+
+output "locality" {
+  value = module.sub_domain_and_cert.locality
+}
+
+output "organization" {
+  value = module.sub_domain_and_cert.organization
+}
+
+output "common_name" {
+  value = module.sub_domain_and_cert.common_name
+}
+
 ################### Secrets #####################
 
 output "telegram_secret_name" {

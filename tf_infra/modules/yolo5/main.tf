@@ -70,9 +70,9 @@ resource "aws_launch_template" "launch_template" {
     name = var.iam_instance_profile_name
   }
 
-  vpc_security_group_ids = [aws_security_group.yolo5_ec2_sg.id]
+  # vpc_security_group_ids = [aws_security_group.yolo5_ec2_sg.id]
   key_name               = var.key_pair_name
-  user_data              = local.user_data
+  user_data              = base64encode(local.user_data)
   ebs_optimized          = var.ebs_optimized
   update_default_version = var.update_default_version
 
@@ -95,6 +95,11 @@ resource "aws_launch_template" "launch_template" {
 
   monitoring {
     enabled = var.monitoring.enabled
+  }
+
+  network_interfaces {
+    associate_public_ip_address = true
+    security_groups             = [aws_security_group.yolo5_ec2_sg.id]
   }
 
   tag_specifications {

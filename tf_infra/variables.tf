@@ -179,25 +179,25 @@ variable "image_tag_mutability" {
   type = string
 }
 
-variable "ecr_lifecycle_policy" {
-  description = "The lifecycle policy for the ECR repository"
-  type = object({
-    rules = list(object({
-      rulePriority = number
-      description  = string
-      selection = object({
-        tagStatus     = string
-        tagPrefixList = optional(list(string), null)
-        countType     = string
-        countNumber   = number
-      })
-      action = object({
-        type = string
-      })
-    }))
-  })
-}
-
+variable "ecr_lifecycle_policy" {}
+# variable "ecr_lifecycle_policy" {
+#   description = "The lifecycle policy for the ECR repository"
+#   type = object({
+#     rules = list(object({
+#       rulePriority = number
+#       description  = string
+#       selection = object({
+#         tagStatus       = string
+#         tagPrefixList   = optional(list(string), [])
+#         countType       = string
+#         countNumber     = number
+#       })
+#       action = object({
+#         type = string
+#       })
+#     }))
+#   })
+# }
 ################# IAM Role ######################
 
 variable "iam_role_name" {

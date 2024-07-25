@@ -15,8 +15,8 @@ versioning               = {
   enabled = true
 }
 ### Secrets ###
-telegram_token_name      = "telegram/token"
-domain_certificate_name  = "sub-domain/certificate"
+telegram_token_name      = "telegram/token/v3"
+domain_certificate_name  = "sub-domain/certificate/v3"
 ### SQS ###
 identify_queue_name      = "sqs-identify"
 results_queue_name       = "sqs-results"
@@ -81,7 +81,7 @@ ecr_lifecycle_policy = {
       }
     },
     {
-      rulePriority = 1
+      rulePriority = 2
       description  = "Keep only one untagged image, expire all others"
       selection = {
         tagStatus   = "untagged"
@@ -145,7 +145,7 @@ alb_target_groups = {
     target_type                       = "instance"
     deregistration_delay              = 300
     load_balancing_algorithm_type     = "round_robin"
-    load_balancing_anomaly_mitigation = "on"
+    load_balancing_anomaly_mitigation = "off"
     load_balancing_cross_zone_enabled = false
 
     health_check = {
