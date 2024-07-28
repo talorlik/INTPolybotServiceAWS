@@ -3,9 +3,9 @@ output "key_pair_name" {
 }
 
 output "pem_file_path" {
-  value = "${path.cwd}/${var.region}/${var.env}/${local.name}.pem"
+  value = "${path.cwd}/${path.module}/${var.region}/${var.env}/${local.name}.pem"
 }
 
 output "pub_file_path" {
-  value = "${path.cwd}/${var.region}/${var.env}/${local.name}.pub"
+  value = "${path.cwd}/${path.module}/${var.region}/${var.env}/${local.name}.pub"
 }

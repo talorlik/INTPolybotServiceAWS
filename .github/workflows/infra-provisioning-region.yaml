@@ -80,16 +80,16 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.REGION }}/${{ env.ENV }}/${{ env.FILE_NAME }}.pem
-          path: ${{ env.PEM_FILE_PATH }}
+          path: "${{ env.PEM_FILE_PATH }}"
 
       - name: Upload Public Key as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.REGION }}/${{ env.ENV }}/${{ env.FILE_NAME }}.pub
-          path: ${{ env.PUB_FILE_PATH }}
+          path: "${{ env.PUB_FILE_PATH }}"
 
       - name: Upload Terraform Outputs as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.REGION }}/${{ env.ENV }}/tf-outputs.json
-          path: ${{ env.OUTPUT_FILE_NAME }}
+          path: "${{ env.OUTPUT_FILE_NAME }}"
