@@ -222,7 +222,7 @@ variable "min_size" {
 variable "max_size" {
   description = "The Max number of instances allowed"
   type        = number
-  default     = 3
+  default     = 2
 }
 
 variable "health_check_type" {
@@ -256,7 +256,7 @@ variable "instance_refresh" {
     preferences = {
       min_healthy_percentage = 50
     }
-    triggers = ["launch_template", "desired_capacity"]
+    triggers = ["desired_capacity", "launch_template"]
   }
 }
 
