@@ -3,9 +3,9 @@ output "key_pair_name" {
 }
 
 output "pem_file_path" {
-  value = local_file.private_key.filename
+  value = "${path.cwd}/${var.region}/${var.env}/${local.name}.pem"
 }
 
 output "pub_file_path" {
-  value = local_file.public_key.filename
+  value = "${path.cwd}/${var.region}/${var.env}/${local.name}.pub"
 }
