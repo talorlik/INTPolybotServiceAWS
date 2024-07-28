@@ -64,7 +64,7 @@ jobs:
       - name: Download Output JSON file
         uses: actions/download-artifact@v2
         with:
-          name: ${{ steps.set_region.outputs.region_code }}/${{ inputs.environment }}/tf-outputs.json
+          name: "${{ steps.set_region.outputs.region_code }}-${{ inputs.environment }}-tf-outputs.json"
           path: ${{ github.workspace }}
 
       - name: Extract outputs from file and set as environment variables
@@ -120,7 +120,7 @@ jobs:
       - SetGlobals
       - Build
     env:
-      ARTIFACT_PATH: ${{ needs.SetGlobals.outputs.region_code }}/${{ inputs.environment }}
+      ARTIFACT_PREFIX: ${{ needs.SetGlobals.outputs.region_code }}-${{ inputs.environment }}
       LOCAL_PATH: /home/runner/.ssh
       PEM_FILE_NAME: ${{ needs.SetGlobals.outputs.key_pair_name }}.pem
     steps:
@@ -132,7 +132,7 @@ jobs:
       - name: Download SSH Key
         uses: actions/download-artifact@v2
         with:
-          name: ${{ env.ARTIFACT_PATH }}/${{ env.PEM_FILE_NAME }}
+          name: "${{ env.ARTIFACT_PREFIX }}-${{ env.PEM_FILE_NAME }}"
           path: ${{ env.LOCAL_PATH }}
 
       - name: Set permissions for SSH Key and Directory
