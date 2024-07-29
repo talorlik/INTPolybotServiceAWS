@@ -116,17 +116,17 @@ jobs:
         env:
           ARTIFACT_NAME: "${{ steps.set_region.outputs.region_code }}-${{ inputs.environment }}-tf-outputs.json"
         run: |
-          echo "telegram_app_url=https://$(jq -r '.sub_domain_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "telegram_secret=$(jq -r '.telegram_secret_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "sub_domain_secret=$(jq -r '.sub_domain_secret_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "sqs_queue_identify=$(jq -r '.identify_queue_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "sqs_queue_results=$(jq -r '.results_queue_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "bucket_name=$(jq -r '.s3_bucket_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "bucket_prefix=$(jq -r '.s3_bucket_prefix' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "table_name=$(jq -r '.table_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "ecr_repository_url=$(jq -r '.ecr_repository_url' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "image_prefix=$(jq -r '.polybot_image_prefix' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "key_pair_name=$(jq -r '.key_pair_name' ${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "telegram_app_url=https://$(jq -r '.sub_domain_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "telegram_secret=$(jq -r '.telegram_secret_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "sub_domain_secret=$(jq -r '.sub_domain_secret_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "sqs_queue_identify=$(jq -r '.identify_queue_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "sqs_queue_results=$(jq -r '.results_queue_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "bucket_name=$(jq -r '.s3_bucket_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "bucket_prefix=$(jq -r '.s3_bucket_prefix' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "table_name=$(jq -r '.table_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "ecr_repository_url=$(jq -r '.ecr_repository_url' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "image_prefix=$(jq -r '.polybot_image_prefix' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "key_pair_name=$(jq -r '.key_pair_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
 
   Build:
     runs-on: ubuntu-latest
