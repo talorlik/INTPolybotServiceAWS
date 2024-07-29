@@ -39,9 +39,9 @@ if ! command -v docker &> /dev/null; then
     sudo apt-get update
     sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
     sudo groupadd docker
-    sudo usermod -aG docker ${USER}
+    sudo usermod -aG docker $USER
     newgrp docker
-    su - ${USER}
+    su - $USER
     sudo systemctl enable docker.service
     sudo systemctl enable containerd.service
     # Write Docker daemon configuration
