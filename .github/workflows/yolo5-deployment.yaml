@@ -112,14 +112,14 @@ jobs:
         env:
           ARTIFACT_NAME: "${{ steps.set_region.outputs.region_code }}-${{ inputs.environment }}-tf-outputs.json"
         run: |
-          echo "sqs_queue_identify=$(jq -r '.identify_queue_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "sqs_queue_results=$(jq -r '.results_queue_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "bucket_name=$(jq -r '.s3_bucket_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "bucket_prefix=$(jq -r '.s3_bucket_prefix' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "table_name=$(jq -r '.table_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "ecr_repository_url=$(jq -r '.ecr_repository_url' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "image_prefix=$(jq -r '.yolo5_image_prefix' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "key_pair_name=$(jq -r '.key_pair_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "sqs_queue_identify=$(jq -r '.identify_queue_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "sqs_queue_results=$(jq -r '.results_queue_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "bucket_name=$(jq -r '.s3_bucket_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "bucket_prefix=$(jq -r '.s3_bucket_prefix.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "table_name=$(jq -r '.table_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "ecr_repository_url=$(jq -r '.ecr_repository_url.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "image_prefix=$(jq -r '.yolo5_image_prefix.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "key_pair_name=$(jq -r '.key_pair_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
 
   Build:
     runs-on: ubuntu-latest

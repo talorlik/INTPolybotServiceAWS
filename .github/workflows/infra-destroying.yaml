@@ -100,11 +100,11 @@ jobs:
       - name: Extract outputs from file and set as environment variables
         id: set_values
         run: |
-          echo "country=$(jq -r '.country' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "state=$(jq -r '.state' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "locality=$(jq -r '.locality' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "organization=$(jq -r '.organization' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
-          echo "common_name=$(jq -r '.common_name' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "country=$(jq -r '.country.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "state=$(jq -r '.state.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "locality=$(jq -r '.locality.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "organization=$(jq -r '.organization.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
+          echo "common_name=$(jq -r '.common_name.value' ${{ github.workspace }}/${{ env.ARTIFACT_NAME }})" >> $GITHUB_OUTPUT
 
   Terraform:
     runs-on: ubuntu-latest
