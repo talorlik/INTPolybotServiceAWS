@@ -263,6 +263,30 @@ module "iam_role" {
           module.secret_telegram_token.secret_arn,
           module.secret_sub_domain_cert.secret_arn
         ]
+      },
+      {
+        Sid = "Allow SSM Management"
+        Effect = "Allow",
+        Action = [
+            "ssm:UpdateInstanceInformation",
+            "ssm:ListInstanceAssociations",
+            "ssm:DescribeInstanceProperties",
+            "ssm:DescribeDocumentParameters",
+            "ssm:GetManifest",
+            "ssm:GetDeployablePatchSnapshotForInstance",
+            "ssm:GetDocument",
+            "ssm:DescribeDocument",
+            "ssm:GetCommandInvocation",
+            "ssm:ListCommands",
+            "ssm:ListCommandInvocations",
+            "ssm:PutInventory",
+            "ssm:PutComplianceItems",
+            "ssm:PutConfigurePackageResult",
+            "ssm:UpdateAssociationStatus",
+            "ssm:UpdateInstanceAssociationStatus",
+            "ssm:UpdateInstanceInformation"
+        ],
+        Resource = "*"
       }
     ]
   })

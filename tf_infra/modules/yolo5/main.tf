@@ -8,9 +8,6 @@ locals {
   # Using a template to dynamically generate the userdata deployment script
   user_data               = templatefile("${path.module}/deploy.sh.tftpl", {
     region                 = var.region
-    telegram_app_url       = var.telegram_app_url
-    telegram_secret_name   = var.telegram_secret_name
-    sub_domain_secret_name = var.sub_domain_secret_name
     identify_queue_name    = var.identify_queue_name
     results_queue_name     = var.results_queue_name
     s3_bucket_name         = var.s3_bucket_name
