@@ -265,7 +265,7 @@ module "iam_role" {
         ]
       },
       {
-        Sid = "Allow SSM Management"
+        Sid = "AllowSSMManagement"
         Effect = "Allow",
         Action = [
             "ssm:UpdateInstanceInformation",
