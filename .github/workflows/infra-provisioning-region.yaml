@@ -1,4 +1,4 @@
-name: Polybot Infrastructure Terraform Specific Region
+name: Infrastructure Terraform Specific Region
 
 on:
   workflow_call:

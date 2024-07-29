@@ -1,4 +1,4 @@
-name: Polybot Infrastructure Terraform Main
+name: Infrastructure Terraform Main
 
 on:
   workflow_dispatch:
