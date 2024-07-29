@@ -211,4 +211,4 @@ jobs:
           GITHUB_RUN_NUMBER: ${{ github.run_number }}
         working-directory: ${{ github.workspace }}/polybot/ansible
         run: |
-          ansible-playbook -i aws_ec2.yaml playbook.yaml --private-key ${{ env.LOCAL_PATH }}/${{ env.PEM_FILE_NAME }}"
+          ansible-playbook -i aws_ec2.yaml playbook.yaml --private-key ${{ env.LOCAL_PATH }}/${{ env.PEM_FILE_NAME }}
