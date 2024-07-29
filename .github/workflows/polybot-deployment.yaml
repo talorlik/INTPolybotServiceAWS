@@ -22,10 +22,10 @@ on:
         description: 'Select Environment'
         required: true
         type: choice
-        default: 'prod'
+        default: prod
         options:
-          - 'prod'
-          - 'dev'
+          - prod
+          - dev
 
 jobs:
   GetRunId:

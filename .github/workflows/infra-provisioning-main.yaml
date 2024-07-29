@@ -35,10 +35,10 @@ on:
         description: 'Select Environment'
         required: true
         type: choice
-        default: 'prod'
+        default: prod
         options:
-          - 'prod'
-          - 'dev'
+          - prod
+          - dev
 
 jobs:
   us-east-1:
@@ -51,6 +51,7 @@ jobs:
       locality: ${{ inputs.locality }}
       organization: ${{ inputs.organization }}
       common_name: ${{ inputs.common_name }}
+      environment: ${{ inputs.environment }}
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -66,6 +67,7 @@ jobs:
       locality: ${{ inputs.locality }}
       organization: ${{ inputs.organization }}
       common_name: ${{ inputs.common_name }}
+      environment: ${{ inputs.environment }}
     secrets:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
