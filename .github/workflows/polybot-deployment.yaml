@@ -22,10 +22,10 @@ on:
         description: 'Select Environment'
         required: true
         type: choice
-        default: 'prod'
+        default: prod
         options:
-          - 'prod'
-          - 'dev'
+          - prod
+          - dev
 
 jobs:
   GetRunId:
@@ -109,7 +109,6 @@ jobs:
           github-token: ${{ secrets.GH_TOKEN }}
           repository: talorlik/INTPolybotServiceAWS
           run-id: ${{ needs.GetRunId.outputs.run_id }}
-          path: ${{ github.workspace }}
 
       - name: Extract outputs from file and set as environment variables
         id: set_values
@@ -183,7 +182,7 @@ jobs:
           github-token: ${{ secrets.GH_TOKEN }}
           repository: talorlik/INTPolybotServiceAWS
           run-id: ${{ needs.GetRunId.outputs.run_id }}
-          path: ${{ env.LOCAL_PATH }}
+          path: "${{ env.LOCAL_PATH }}"
 
       - name: Set permissions for SSH Key and Directory
         run: |

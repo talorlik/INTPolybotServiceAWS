@@ -1,6 +1,4 @@
 ### General ###
-env                      = "prod"
-region                   = "us-east-2"
 prefix                   = "talo-tf"
 resource_alias           = "talo"
 ### VPC ###
@@ -15,8 +13,8 @@ versioning               = {
   enabled = true
 }
 ### Secrets ###
-telegram_token_name      = "telegram/token/v5"
-domain_certificate_name  = "sub-domain/certificate/v5"
+telegram_token_name      = "telegram/token/v6"
+domain_certificate_name  = "sub-domain/certificate/v6"
 ### SQS ###
 identify_queue_name      = "sqs-identify"
 results_queue_name       = "sqs-results"

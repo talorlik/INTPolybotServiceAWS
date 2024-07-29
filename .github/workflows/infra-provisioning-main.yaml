@@ -31,6 +31,14 @@ on:
         required: true
         type: string
         default: talo-polybot.int-devops.click
+      environment:
+        description: 'Select Environment'
+        required: true
+        type: choice
+        default: prod
+        options:
+          - prod
+          - dev
 
 jobs:
   us-east-1:
