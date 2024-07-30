@@ -77,11 +77,11 @@ jobs:
             -var "locality=${{ inputs.locality }}" \
             -var "organization=${{ inputs.organization }}" \
             -var "common_name=${{ inputs.common_name }}" \
-            -out region.${{ inputs.region-code }}.tfplan
+            -out region.${{ inputs.region-code }}.${{ inputs.environment }}.tfplan
 
       - name: Terraform apply
         run: |
-          terraform apply -auto-approve region.${{ inputs.region-code }}.tfplan
+          terraform apply -auto-approve region.${{ inputs.region-code }}.${{ inputs.environment }}.tfplan
 
       - name: Get Terraform Output
         id: output
