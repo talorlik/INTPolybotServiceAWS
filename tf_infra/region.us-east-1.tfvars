@@ -13,8 +13,8 @@ versioning               = {
   enabled = true
 }
 ### Secrets ###
-telegram_token_name      = "telegram/token/v7"
-domain_certificate_name  = "sub-domain/certificate/v7"
+telegram_token_name      = "telegram/token/v8"
+domain_certificate_name  = "sub-domain/certificate/v8"
 ### SQS ###
 identify_queue_name      = "sqs-identify"
 results_queue_name       = "sqs-results"
