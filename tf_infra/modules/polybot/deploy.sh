@@ -1,6 +1,6 @@
 #!/bin/bash
 
-su - ubuntu
+sudo -u ubuntu -i <<'EOF'
 
 # Function to check if a package is installed
 is_installed() {
@@ -39,13 +39,13 @@ if ! command -v docker &> /dev/null; then
     sudo apt-get update
     sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin -y
     sudo groupadd docker
-    sudo usermod -aG docker $USER
+    sudo usermod -aG docker ubuntu
     newgrp docker
-    su - $USER
+    su - ubuntu
     sudo systemctl enable docker.service
     sudo systemctl enable containerd.service
     # Write Docker daemon configuration
-    sudo tee /etc/docker/daemon.json > /dev/null <<EOF
+    sudo tee /etc/docker/daemon.json > /dev/null <<'INNER_EOF'
 {
   "log-driver": "json-file",
   "log-opts": {
@@ -53,7 +53,7 @@ if ! command -v docker &> /dev/null; then
     "max-file": "3"
   }
 }
-EOF
+INNER_EOF
 
     # Restart Docker to apply the new configuration
     sudo systemctl restart docker
@@ -89,3 +89,4 @@ if ! command -v aws &> /dev/null; then
         exit 1
     fi
 fi
+EOF
