@@ -146,7 +146,17 @@ jobs:
           terraform workspace select ${{ matrix.region }} || terraform workspace new ${{ matrix.region }}
 
           # tf plan destroy
-          terraform plan -var-file="region.${{ matrix.region }}.tfvars" -var "telegram_token_value=${{ env.TELEGRAM_TOKEN }}" -var "country=${{ needs.SetGlobals.outputs.country }}" -var "state=${{ needs.SetGlobals.outputs.state }}" -var "locality=${{ needs.SetGlobals.outputs.locality }}" -var "organization=${{ needs.SetGlobals.outputs.organization }}" -var "common_name=${{ needs.SetGlobals.outputs.common_name }}" -destroy -out region.${{ matrix.region }}.${{ inputs.environment }}.tfplan
+          terraform plan \
+          -var-file="region.${{ matrix.region }}.tfvars" \
+          -var "env=${{ inputs.environment }}" \
+          -var "region=${{ matrix.region }}" \
+          -var "telegram_token_value=${{ env.TELEGRAM_TOKEN }}" \
+          -var "country=${{ needs.SetGlobals.outputs.country }}" \
+          -var "state=${{ needs.SetGlobals.outputs.state }}" \
+          -var "locality=${{ needs.SetGlobals.outputs.locality }}" \
+          -var "organization=${{ needs.SetGlobals.outputs.organization }}" \
+          -var "common_name=${{ needs.SetGlobals.outputs.common_name }}" \
+          -destroy -out region.${{ matrix.region }}.${{ inputs.environment }}.tfplan
 
           # tf apply
           terraform apply -auto-approve region.${{ matrix.region }}.${{ inputs.environment }}.tfplan
