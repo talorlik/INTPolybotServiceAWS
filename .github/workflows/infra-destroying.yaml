@@ -116,10 +116,14 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ needs.SetGlobals.outputs.region_code }}
+    defaults:
+      run:
+        working-directory: ./tf_infra
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Setup Terraform
+
+      - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.2
@@ -132,27 +136,28 @@ jobs:
             echo "TELEGRAM_TOKEN=${{ secrets.US_EAST_2_TELEGRAM_TOKEN }}" >> $GITHUB_ENV
           fi
 
-      - name: Destroying infrastructure
-        working-directory: ./tf_infra
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform workspace select
+        run: terraform workspace select ${{ env.AWS_REGION }} || terraform workspace new ${{ env.AWS_REGION }}
+
+      - name: Terraform validate
+        run: terraform validate
+
+      - name: Terraform plan destroy
         run: |
-          # init terraform
-          terraform init
-
-          # select workspace or create if needed
-          terraform workspace select ${{ env.AWS_REGION }} || terraform workspace new ${{ env.AWS_REGION }}
-
-          # tf plan destroy
           terraform plan \
-          -var-file="region.${{ env.AWS_REGION }}.tfvars" \
-          -var "env=${{ inputs.environment }}" \
-          -var "region=${{ env.AWS_REGION }}" \
-          -var "telegram_token_value=${{ env.TELEGRAM_TOKEN }}" \
-          -var "country=${{ needs.SetGlobals.outputs.country }}" \
-          -var "state=${{ needs.SetGlobals.outputs.state }}" \
-          -var "locality=${{ needs.SetGlobals.outputs.locality }}" \
-          -var "organization=${{ needs.SetGlobals.outputs.organization }}" \
-          -var "common_name=${{ needs.SetGlobals.outputs.common_name }}" \
-          -destroy -out region.${{ env.AWS_REGION }}.${{ inputs.environment }}.tfplan
+            -var-file="region.${{ env.AWS_REGION }}.tfvars" \
+            -var "env=${{ inputs.environment }}" \
+            -var "region=${{ env.AWS_REGION }}" \
+            -var "telegram_token_value=${{ env.TELEGRAM_TOKEN }}" \
+            -var "country=${{ needs.SetGlobals.outputs.country }}" \
+            -var "state=${{ needs.SetGlobals.outputs.state }}" \
+            -var "locality=${{ needs.SetGlobals.outputs.locality }}" \
+            -var "organization=${{ needs.SetGlobals.outputs.organization }}" \
+            -var "common_name=${{ needs.SetGlobals.outputs.common_name }}" \
+            -destroy -out region.${{ env.AWS_REGION }}.${{ inputs.environment }}.tfplan
 
-          # tf apply
-          terraform apply -auto-approve region.${{ env.AWS_REGION }}.${{ inputs.environment }}.tfplan
+      - name: Destroy infrastructure
+        run: terraform apply -auto-approve region.${{ env.AWS_REGION }}.${{ inputs.environment }}.tfplan

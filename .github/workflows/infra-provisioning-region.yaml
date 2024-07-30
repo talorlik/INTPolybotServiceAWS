@@ -48,7 +48,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Setup Terraform
+      - name: Setup terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.2
@@ -79,11 +79,10 @@ jobs:
             -var "common_name=${{ inputs.common_name }}" \
             -out region.${{ inputs.region-code }}.${{ inputs.environment }}.tfplan
 
-      - name: Terraform apply
-        run: |
-          terraform apply -auto-approve region.${{ inputs.region-code }}.${{ inputs.environment }}.tfplan
+      - name: Provision infrastructure
+        run: terraform apply -auto-approve region.${{ inputs.region-code }}.${{ inputs.environment }}.tfplan
 
-      - name: Get Terraform Output
+      - name: Get terraform output
         id: output
         run: |
           echo "PEM_FILE_PATH=$(terraform output -raw pem_file_path)" >> $GITHUB_ENV
@@ -91,21 +90,21 @@ jobs:
           echo "FILE_NAME=$(terraform output -raw key_pair_name)" >> $GITHUB_ENV
           terraform output -json > ${{ github.workspace }}/${{ env.OUTPUTS_ARTIFACT_NAME }}
 
-      - name: Upload Private Key as Artifact
+      - name: Upload private key as artifact
         uses: actions/upload-artifact@v4
         with:
           name: "${{ inputs.region-code }}-${{ inputs.environment }}-${{ env.FILE_NAME }}.pem"
           path: "${{ env.PEM_FILE_PATH }}"
           retention-days: 5
 
-      - name: Upload Public Key as Artifact
+      - name: Upload public key as artifact
         uses: actions/upload-artifact@v4
         with:
           name: "${{ inputs.region-code }}-${{ inputs.environment }}-${{ env.FILE_NAME }}.pub"
           path: "${{ env.PUB_FILE_PATH }}"
           retention-days: 5
 
-      - name: Upload Terraform Outputs as Artifact
+      - name: Upload terraform outputs as artifact
         uses: actions/upload-artifact@v4
         with:
           name: "${{ env.OUTPUTS_ARTIFACT_NAME }}"
