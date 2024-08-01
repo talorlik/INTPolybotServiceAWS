@@ -16,7 +16,7 @@ variable "prefix" {
 
 variable "instance_name" {
   description = "The Name of the EC2"
-  type = string
+  type        = string
 }
 
 variable "azs" {
@@ -46,7 +46,7 @@ variable "key_pair_name" {
 
 variable "public_subnets" {
   description = "A list of subnets into which the EC2 machines will be deployed"
-  type = list(string)
+  type        = list(string)
 }
 
 variable "yolo5_sg_name" {
@@ -141,8 +141,8 @@ variable "monitoring" {
 }
 
 variable "launch_template_description" {
-  type        = string
-  default     = "Launch a Yolo5 EC2 Instance plus User Data to start the yolo5 container"
+  type    = string
+  default = "Launch a Yolo5 EC2 Instance plus User Data to start the yolo5 container"
 }
 
 variable "ecr_name" {

@@ -14,27 +14,27 @@ variable "queue_name" {
 }
 
 variable "visibility_timeout_seconds" {
-    type = number
+    type    = number
     default = 30
 }
 
 variable "message_retention_seconds" {
-    type = number
+    type    = number
     default = 86400
 }
 
 variable "delay_seconds" {
-    type = number
+    type    = number
     default = 0
 }
 
 variable "max_message_size" {
-    type = number
+    type    = number
     default = 262144
 }
 
 variable "receive_wait_time_seconds" {
-    type = number
+    type    = number
     default = 0
 }
 

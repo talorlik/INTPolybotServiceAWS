@@ -23,7 +23,7 @@ locals {
 
 # Output: public_subnets for use in ALB
 module "vpc" {
-  source         = "terraform-aws-modules/vpc/aws"
+  source         = "./modules/vpc"
   name           = local.vpc_name
   cidr           = var.vpc_cidr
   azs            = local.azs

@@ -12,12 +12,12 @@ variable "prefix" {
 }
 
 variable "algorithm" {
-  type = string
+  type    = string
   default = "RSA"
 }
 
 variable "bits" {
-  type = number
+  type    = number
   default = 2048
 }
 
@@ -28,5 +28,5 @@ variable "key_pair_name" {
 
 variable "tags" {
   description = "A map of tags to assign to the resource"
-  type = map(string)
+  type        = map(string)
 }

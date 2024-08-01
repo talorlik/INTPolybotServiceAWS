@@ -16,7 +16,7 @@ variable "prefix" {
 
 variable "instance_name" {
   description = "The Name of the EC2"
-  type = string
+  type        = string
 }
 
 variable "azs" {
@@ -47,7 +47,7 @@ variable "key_pair_name" {
 
 variable "public_subnets" {
   description = "A list of subnets into which the EC2 machines will be deployed"
-  type = list(string)
+  type        = list(string)
 }
 
 variable "iam_instance_profile_name" {
@@ -57,8 +57,8 @@ variable "iam_instance_profile_name" {
 
 variable "associate_public_ip_address" {
   description = "Whether to generate a public IP address or not"
-  type = bool
-  default = true
+  type        = bool
+  default     = true
 }
 
 variable "alb_name" {

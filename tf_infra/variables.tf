@@ -171,12 +171,12 @@ variable "attributes" {
 
 variable "ecr_name" {
   description = "The name of the ECR"
-  type = string
+  type        = string
 }
 
 variable "image_tag_mutability" {
   description = "The value that determines if the image is overridable"
-  type = string
+  type        = string
 }
 
 variable "ecr_lifecycle_policy" {}
@@ -202,17 +202,17 @@ variable "ecr_lifecycle_policy" {}
 
 variable "iam_role_name" {
   description = "The name of the IAM Role"
-  type = string
+  type        = string
 }
 
 variable "iam_role_policy_name" {
   description = "The name of the IAM Role Policy"
-  type = string
+  type        = string
 }
 
 variable "iam_instance_profile_name" {
   description = "The name of the Instance Profile"
-  type = string
+  type        = string
 }
 
 ############### EC2 Key Pair ####################

@@ -1,27 +1,27 @@
 output "region" {
   description = "The AWS region"
-  value = var.region
+  value       = var.region
 }
 
 output "env" {
   description = "The Environment e.g. prod"
-  value = var.env
+  value       = var.env
 }
 
 ###################### VPC ######################
 output "vpc_id" {
   description = "The VPC's ID"
-  value = module.vpc.vpc_id
+  value       = module.vpc.vpc_id
 }
 
 output "default_security_group_id" {
   description = "The default security group for the VPC"
-  value = module.vpc.default_security_group_id
+  value       = module.vpc.default_security_group_id
 }
 
 output "public_subnets" {
   description = "The VPC's associated public subnets."
-  value = module.vpc.public_subnets
+  value       = module.vpc.public_subnets
 }
 
 ################### S3 ##########################
@@ -38,7 +38,7 @@ output "s3_bucket_arn" {
 
 output "s3_bucket_prefix" {
   description = "The folder name that where the images are"
-  value = var.s3_bucket_prefix
+  value       = var.s3_bucket_prefix
 }
 
 ############# Sub-Domian / Cert ##################

@@ -15,7 +15,7 @@ variable "ecr_name" {
 
 variable "image_tag_mutability" {
   description = "The value that determines if the image is overridable"
-  type = string
+  type        = string
 }
 
 variable "policy" {
