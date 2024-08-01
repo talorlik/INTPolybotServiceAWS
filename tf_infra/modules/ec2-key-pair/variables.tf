@@ -7,8 +7,8 @@ variable "region" {
 }
 
 variable "prefix" {
-    description = "Name added to all resources"
-    type        = string
+  description = "Name added to all resources"
+  type        = string
 }
 
 variable "algorithm" {

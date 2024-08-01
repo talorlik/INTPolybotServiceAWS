@@ -28,7 +28,7 @@ resource "aws_instance" "polybot_ec2" {
   tags = merge(
     {
       Name = "${var.prefix}-${var.instance_name}-${each.key}-${var.env}"
-      App = "talo-polybot"
+      App  = "talo-polybot"
     },
     var.tags
   )
@@ -41,8 +41,8 @@ locals {
 module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
-  name = local.alb_name
-  vpc_id = var.vpc_id
+  name    = local.alb_name
+  vpc_id  = var.vpc_id
   subnets = var.public_subnets
 
   enable_deletion_protection = var.enable_deletion_protection
@@ -76,7 +76,7 @@ module "alb" {
     port            = v.port
     protocol        = v.protocol
     certificate_arn = var.certificate_arn
-    forward         = {
+    forward = {
       target_group_key = v.forward.target_group_key
     }
     tags = merge(
@@ -120,10 +120,10 @@ module "alb" {
   } }
 
   additional_target_group_attachments = { for k, v in var.alb_additional_target_group_attachments : k => {
-    target_group_key  = v.target_group_key
-    target_id         = local.instance_ids[1].id
-    target_type       = v.target_type
-    port              = v.port
+    target_group_key = v.target_group_key
+    target_id        = local.instance_ids[1].id
+    target_type      = v.target_type
+    port             = v.port
   } }
 
   tags = merge(

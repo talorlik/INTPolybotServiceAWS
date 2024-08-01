@@ -15,7 +15,7 @@ locals {
   s3_bucket_name = "${var.prefix}-${var.s3_bucket_name}-${var.env}"
   azs            = slice(data.aws_availability_zones.available.names, 0, 2)
   ami_id         = module.ubuntu_24_04_latest.ami_id
-  tags           = {
+  tags = {
     Env       = var.env
     Terraform = true
   }
@@ -28,7 +28,7 @@ module "vpc" {
   cidr           = var.vpc_cidr
   azs            = local.azs
   public_subnets = [for k, v in local.azs : cidrsubnet(var.vpc_cidr, 8, k + 1)]
-  tags           = merge(
+  tags = merge(
     {
       Name = local.vpc_name
     },
@@ -43,7 +43,7 @@ module "s3_bucket" {
   control_object_ownership = var.control_object_ownership
   object_ownership         = var.object_ownership
   versioning               = var.versioning
-  tags                     = merge(
+  tags = merge(
     {
       Name = local.s3_bucket_name
     },
@@ -66,14 +66,14 @@ module "sub_domain_and_cert" {
 
 ################## Secrets ######################
 module "secret_telegram_token" {
-  source       = "./modules/secret-manager"
-  env          = var.env
-  prefix       = var.prefix
-  secret_name  = var.telegram_token_name
+  source      = "./modules/secret-manager"
+  env         = var.env
+  prefix      = var.prefix
+  secret_name = var.telegram_token_name
   secret_value = jsonencode({
     TELEGRAM_TOKEN = var.telegram_token_value
   })
-  tags         = local.tags
+  tags = local.tags
 }
 
 module "secret_sub_domain_cert" {
@@ -122,7 +122,7 @@ module "dynamodb" {
 ################### ECR #######################
 
 module "ecr_and_policy" {
-  source               = "./modules/ecr-and-policy"
+  source = "./modules/ecr-and-policy"
 
   env                  = var.env
   prefix               = var.prefix
@@ -135,163 +135,23 @@ module "ecr_and_policy" {
 ################## IAM Role ######################
 
 module "iam_role" {
-  source             = "./modules/iam-role-and-policy"
+  source = "./modules/iam-role-and-policy"
 
   env                = var.env
   prefix             = var.prefix
   iam_role_name      = var.iam_role_name
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Service = "ec2.amazonaws.com"
-        },
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
+  assume_role_policy = var.iam_assume_role_policy
 
   iam_role_policy_name = var.iam_role_policy_name
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Sid = "GetAuthTokenECR",
-        Effect = "Allow",
-        Action = [
-          "ecr:GetAuthorizationToken"
-        ],
-        Resource = "*"
-      },
-      {
-        Sid = "ReadOnlyFromECR",
-        Effect = "Allow",
-        Action = [
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:GetRepositoryPolicy",
-          "ecr:DescribeRepositories",
-          "ecr:ListImages",
-          "ecr:DescribeImages",
-          "ecr:BatchGetImage",
-          "ecr:GetLifecyclePolicy",
-          "ecr:GetLifecyclePolicyPreview",
-          "ecr:ListTagsForResource",
-          "ecr:DescribeImageScanFindings"
-        ],
-        Resource = module.ecr_and_policy.ecr_arn
-      },
-      {
-        Sid = "ListBucketContents",
-        Effect = "Allow",
-        Action = [
-          "s3:ListBucket"
-        ],
-        Resource = module.s3_bucket.s3_bucket_arn,
-        Condition = {
-          StringLike = {
-            "s3:prefix" = [
-              "images/*"
-            ]
-          }
-        }
-      },
-      {
-        Sid = "GetObjectAndPutObject",
-        Effect = "Allow",
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject"
-        ],
-        Resource = "${module.s3_bucket.s3_bucket_arn}/images/*"
-      },
-      {
-        Sid = "ReadWriteToDynamoDB",
-        Effect = "Allow",
-        Action = [
-          "dynamodb:GetItem",
-          "dynamodb:Query",
-          "dynamodb:Scan",
-          "dynamodb:PutItem",
-          "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem"
-        ],
-        Resource = module.dynamodb.table_arn
-      },
-      {
-        Sid = "SQSSendMessages",
-        Effect = "Allow",
-        Action = "sqs:SendMessage",
-        Resource = [
-          module.identify_queue.sqs_queue_arn,
-          module.results_queue.sqs_queue_arn
-        ]
-      },
-      {
-        Sid = "SQSReceiveDeleteMessages",
-        Effect = "Allow",
-        Action = [
-          "sqs:ReceiveMessage",
-          "sqs:DeleteMessage",
-          "sqs:ChangeMessageVisibility"
-        ],
-        Resource = [
-          module.identify_queue.sqs_queue_arn,
-          module.results_queue.sqs_queue_arn
-        ]
-      },
-      {
-        Sid = "SQSViewAttributes",
-        Effect = "Allow",
-        Action = [
-          "sqs:GetQueueAttributes",
-          "sqs:GetQueueUrl"
-        ],
-        Resource = [
-          module.identify_queue.sqs_queue_arn,
-          module.results_queue.sqs_queue_arn
-        ]
-      },
-      {
-        Sid = "ReadSpecificSecret",
-        Effect = "Allow",
-        Action = [
-          "secretsmanager:GetSecretValue",
-          "secretsmanager:DescribeSecret"
-        ],
-        Resource = [
-          module.secret_telegram_token.secret_arn,
-          module.secret_sub_domain_cert.secret_arn
-        ]
-      },
-      {
-        Sid = "AllowSSMManagement"
-        Effect = "Allow",
-        Action = [
-            "ssm:UpdateInstanceInformation",
-            "ssm:ListInstanceAssociations",
-            "ssm:DescribeInstanceProperties",
-            "ssm:DescribeDocumentParameters",
-            "ssm:GetManifest",
-            "ssm:GetDeployablePatchSnapshotForInstance",
-            "ssm:GetDocument",
-            "ssm:DescribeDocument",
-            "ssm:GetCommandInvocation",
-            "ssm:ListCommands",
-            "ssm:ListCommandInvocations",
-            "ssm:PutInventory",
-            "ssm:PutComplianceItems",
-            "ssm:PutConfigurePackageResult",
-            "ssm:UpdateAssociationStatus",
-            "ssm:UpdateInstanceAssociationStatus",
-            "ssm:UpdateInstanceInformation"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
+  policy_template      = var.iam_policy_template
+
+  ecr_arn                    = module.ecr_and_policy.ecr_arn
+  s3_bucket_arn              = module.s3_bucket.s3_bucket_arn
+  dynamodb_table_arn         = module.dynamodb.table_arn
+  identify_queue_arn         = module.identify_queue.sqs_queue_arn
+  results_queue_arn          = module.results_queue.sqs_queue_arn
+  telegram_token_secret_arn  = module.secret_telegram_token.secret_arn
+  sub_domain_cert_secret_arn = module.secret_sub_domain_cert.secret_arn
 
   iam_instance_profile_name = var.iam_instance_profile_name
 
@@ -312,41 +172,41 @@ module "ec2_key_pair" {
 ################## Polybot #######################
 
 module "polybot" {
-  source                    = "./modules/polybot"
-  env                       = var.env
-  region                    = var.region
-  prefix                    = var.prefix
-  instance_name             = var.polybot_instance_name
-  azs                       = local.azs
+  source        = "./modules/polybot"
+  env           = var.env
+  region        = var.region
+  prefix        = var.prefix
+  instance_name = var.polybot_instance_name
+  azs           = local.azs
   # ami                       = data.aws_ami.ubuntu.id
-  ami                       = local.ami_id
-  instance_type             = var.polybot_instance_type
-  image_prefix              = var.polybot_image_prefix
-  key_pair_name             = module.ec2_key_pair.key_pair_name
-  public_subnets            = module.vpc.public_subnets
-  iam_instance_profile_name = module.iam_role.iam_instance_profile_name
-  vpc_id                    = module.vpc.vpc_id
-  alb_security_group_ingress_rules = var.alb_security_group_ingress_rules
-  alb_security_group_egress_rules  = var.alb_security_group_egress_rules
-  referenced_security_group_id     = module.vpc.default_security_group_id
-  alb_listeners                    = var.alb_listeners
-  certificate_arn                  = module.sub_domain_and_cert.certificate_arn
-  alb_target_groups                = var.alb_target_groups
+  ami                                     = local.ami_id
+  instance_type                           = var.polybot_instance_type
+  image_prefix                            = var.polybot_image_prefix
+  key_pair_name                           = module.ec2_key_pair.key_pair_name
+  public_subnets                          = module.vpc.public_subnets
+  iam_instance_profile_name               = module.iam_role.iam_instance_profile_name
+  vpc_id                                  = module.vpc.vpc_id
+  alb_security_group_ingress_rules        = var.alb_security_group_ingress_rules
+  alb_security_group_egress_rules         = var.alb_security_group_egress_rules
+  referenced_security_group_id            = module.vpc.default_security_group_id
+  alb_listeners                           = var.alb_listeners
+  certificate_arn                         = module.sub_domain_and_cert.certificate_arn
+  alb_target_groups                       = var.alb_target_groups
   alb_additional_target_group_attachments = var.alb_additional_target_group_attachments
-  ec2_sg_ingress_rules             = var.polybot_ec2_sg_ingress_rules
-  ec2_sg_egress_rules              = var.polybot_ec2_sg_egress_rules
-  tags                             = local.tags
+  ec2_sg_ingress_rules                    = var.polybot_ec2_sg_ingress_rules
+  ec2_sg_egress_rules                     = var.polybot_ec2_sg_egress_rules
+  tags                                    = local.tags
 }
 
 ################### Yolo5 ########################
 
 module "yolo5" {
-  source                    = "./modules/yolo5"
-  env                       = var.env
-  region                    = var.region
-  prefix                    = var.prefix
-  instance_name             = var.yolo5_instance_name
-  azs                       = local.azs
+  source        = "./modules/yolo5"
+  env           = var.env
+  region        = var.region
+  prefix        = var.prefix
+  instance_name = var.yolo5_instance_name
+  azs           = local.azs
   # ami                       = data.aws_ami.ubuntu.id
   ami                       = local.ami_id
   instance_type             = var.yolo5_instance_type

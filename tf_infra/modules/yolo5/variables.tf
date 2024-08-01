@@ -1,17 +1,17 @@
 variable "env" {
-    description = "Deployment environment"
-    type        = string
+  description = "Deployment environment"
+  type        = string
 }
 
 variable "region" {
-    description = "Deployment region"
-    type        = string
-    default     = "us-east-1"
+  description = "Deployment region"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "prefix" {
-    description = "Name added to all resources"
-    type        = string
+  description = "Name added to all resources"
+  type        = string
 }
 
 variable "instance_name" {
@@ -30,8 +30,8 @@ variable "ami" {
 }
 
 variable "instance_type" {
-    description = "Instance Type"
-    type        = string
+  description = "Instance Type"
+  type        = string
 }
 
 variable "iam_instance_profile_name" {
@@ -103,7 +103,7 @@ variable "update_default_version" {
 variable "block_device_mappings" {
   description = "EC2 block device mappings settings"
   type = list(object({
-    device_name  = string
+    device_name = string
     ebs = optional(object({
       delete_on_termination = optional(bool, true)
       encrypted             = optional(bool, false)
@@ -114,8 +114,8 @@ variable "block_device_mappings" {
       volume_size           = optional(number)
       volume_type           = optional(string)
     }))
-    no_device     = optional(string)
-    virtual_name  = optional(string)
+    no_device    = optional(string)
+    virtual_name = optional(string)
   }))
   default = [
     {
@@ -202,9 +202,9 @@ variable "ecr_repository_url" {
 }
 
 variable "asg_name" {
-    description = "The Name of the Auto Scaling Group"
-    type        = string
-    default     = "asg"
+  description = "The Name of the Auto Scaling Group"
+  type        = string
+  default     = "asg"
 }
 
 variable "desired_capacity" {
@@ -234,7 +234,7 @@ variable "health_check_type" {
 variable "instance_refresh" {
   description = "Configuration for instance refresh"
   type = object({
-    strategy    = string,
+    strategy = string,
     preferences = optional(object({
       checkpoint_delay       = optional(number, 3600),
       checkpoint_percentages = optional(list(number)),
@@ -243,13 +243,13 @@ variable "instance_refresh" {
       min_healthy_percentage = optional(number, 90),
       skip_matching          = optional(bool, false),
       auto_rollback          = optional(bool, false),
-      alarm_specification    = optional(object({
+      alarm_specification = optional(object({
         alarms = list(string)
       })),
       scale_in_protected_instances = optional(string, "Ignore"),
-      standby_instances = optional(string, "Ignore")
+      standby_instances            = optional(string, "Ignore")
     })),
-    triggers    = optional(set(string))
+    triggers = optional(set(string))
   })
   default = {
     strategy = "Rolling"
@@ -261,15 +261,15 @@ variable "instance_refresh" {
 }
 
 variable "sns_topic_name" {
-    description = "The Name of the SNS Topic that will be used for notifications"
-    type        = string
-    default     = "sns-topic"
+  description = "The Name of the SNS Topic that will be used for notifications"
+  type        = string
+  default     = "sns-topic"
 }
 
 variable "autoscaling_policy_name" {
-    description = "The Name of the Autoscaling Policy"
-    type        = string
-    default     = "avg-cpu-policy"
+  description = "The Name of the Autoscaling Policy"
+  type        = string
+  default     = "avg-cpu-policy"
 }
 
 variable "sns_protocol" {
@@ -312,7 +312,7 @@ variable "target_tracking_configuration" {
       namespace        = optional(string)
       statistic        = optional(string)
       unit             = optional(string)
-      metrics          = optional(list(object({
+      metrics = optional(list(object({
         id         = string
         expression = optional(string)
       })))

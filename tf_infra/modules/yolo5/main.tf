@@ -6,16 +6,16 @@ locals {
   sns_topic_name          = "${var.prefix}-${var.sns_topic_name}-${var.env}"
   autoscaling_policy_name = "${var.prefix}-${var.autoscaling_policy_name}-${var.env}"
   # Using a template to dynamically generate the userdata deployment script
-  user_data               = templatefile("${path.module}/deploy.sh.tftpl", {
-    region                 = var.region
-    identify_queue_name    = var.identify_queue_name
-    results_queue_name     = var.results_queue_name
-    s3_bucket_name         = var.s3_bucket_name
-    s3_bucket_prefix       = var.s3_bucket_prefix
-    table_name             = var.table_name
-    ecr_name               = var.ecr_name
-    ecr_repository_url     = var.ecr_repository_url
-    image_prefix           = var.image_prefix
+  user_data = templatefile("${path.module}/deploy.sh.tftpl", {
+    region              = var.region
+    identify_queue_name = var.identify_queue_name
+    results_queue_name  = var.results_queue_name
+    s3_bucket_name      = var.s3_bucket_name
+    s3_bucket_prefix    = var.s3_bucket_prefix
+    table_name          = var.table_name
+    ecr_name            = var.ecr_name
+    ecr_repository_url  = var.ecr_repository_url
+    image_prefix        = var.image_prefix
   })
 }
 
@@ -58,10 +58,10 @@ resource "aws_security_group" "yolo5_ec2_sg" {
 
 ################## Launch Template ########################
 resource "aws_launch_template" "launch_template" {
-  name                   = local.launch_template_name
-  description            = var.launch_template_description
-  image_id               = var.ami
-  instance_type          = var.instance_type
+  name          = local.launch_template_name
+  description   = var.launch_template_description
+  image_id      = var.ami
+  instance_type = var.instance_type
 
   iam_instance_profile {
     name = var.iam_instance_profile_name
@@ -104,7 +104,7 @@ resource "aws_launch_template" "launch_template" {
     tags = merge(
       {
         Name = local.ec2_name
-        App = "talo-yolo5"
+        App  = "talo-yolo5"
       },
       var.tags
     )
@@ -171,10 +171,10 @@ resource "aws_autoscaling_notification" "notifications" {
 ############# Target Tracking Scaling Policies ###########
 # TTS - Scaling Policy-1: Based on CPU Utilization
 resource "aws_autoscaling_policy" "avg_cpu_policy" {
-  name                      = local.autoscaling_policy_name
+  name = local.autoscaling_policy_name
   # The policy type may be either "SimpleScaling", "StepScaling" or "TargetTrackingScaling". If this value isn't provided, AWS will default to "SimpleScaling."
-  policy_type               = var.policy_type
-  autoscaling_group_name    = aws_autoscaling_group.asg.id
+  policy_type            = var.policy_type
+  autoscaling_group_name = aws_autoscaling_group.asg.id
   # CPU Utilization is above 50
   target_tracking_configuration {
     dynamic "predefined_metric_specification" {

@@ -1,29 +1,29 @@
 ### General ###
-prefix                   = "talo-tf"
-resource_alias           = "talo"
+prefix         = "talo-tf"
+resource_alias = "talo"
 ### VPC ###
-vpc_cidr                 = "10.0.0.0/16"
+vpc_cidr = "10.0.0.0/16"
 ### S3 ###
 s3_bucket_name           = "s3"
 s3_bucket_prefix         = "images"
 acl                      = "private"
 control_object_ownership = true
 object_ownership         = "ObjectWriter"
-versioning               = {
+versioning = {
   enabled = true
 }
 ### Secrets ###
-telegram_token_name      = "telegram/token/v1c"
-domain_certificate_name  = "sub-domain/certificate/v1c"
+telegram_token_name     = "telegram/token/v1c"
+domain_certificate_name = "sub-domain/certificate/v1c"
 ### SQS ###
-identify_queue_name      = "sqs-identify"
-results_queue_name       = "sqs-results"
+identify_queue_name = "sqs-identify"
+results_queue_name  = "sqs-results"
 ### DynamoDB ###
-table_name               = "prediction-results"
-billing_mode             = "PROVISIONED"
-hash_key                 = "predictionId"
-read_capacity            = 1
-write_capacity           = 1
+table_name     = "prediction-results"
+billing_mode   = "PROVISIONED"
+hash_key       = "predictionId"
+read_capacity  = 1
+write_capacity = 1
 global_secondary_indexes = [
   {
     name            = "chatId-predictionId-index"
@@ -93,15 +93,28 @@ ecr_lifecycle_policy = {
   ]
 }
 ### IAM Role ###
-iam_role_name                    = "ec2-role"
-iam_role_policy_name             = "ec2-policy"
-iam_instance_profile_name        = "instance-profile"
+iam_role_name             = "ec2-role"
+iam_role_policy_name      = "ec2-policy"
+iam_instance_profile_name = "instance-profile"
+iam_assume_role_policy    = {
+  Version = "2012-10-17",
+  Statement = [
+    {
+      Effect = "Allow",
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      },
+      Action = "sts:AssumeRole"
+    }
+  ]
+}
+iam_policy_template       = "policy_template.tftpl"
 ### EC2 ###
-key_pair_name                    = "ec2-key-pair"
+key_pair_name = "ec2-key-pair"
 ### Polybot ###
-polybot_instance_name            = "polybot-ec2"
-polybot_instance_type            = "t3.micro"
-polybot_image_prefix             = "polybot-v2"
+polybot_instance_name = "polybot-ec2"
+polybot_instance_type = "t3.micro"
+polybot_image_prefix  = "polybot-v2"
 alb_security_group_ingress_rules = {
   http_1 = {
     description = "HTTPS traffic from Telegram servers"
@@ -128,9 +141,9 @@ alb_security_group_egress_rules = {
 }
 alb_listeners = {
   https-listener = {
-    port            = 8443
-    protocol        = "HTTPS"
-    forward         = {
+    port     = 8443
+    protocol = "HTTPS"
+    forward = {
       target_group_key = "target-instance"
     }
   }
@@ -161,9 +174,9 @@ alb_target_groups = {
 }
 alb_additional_target_group_attachments = {
   ex-instance-other = {
-    target_group_key  = "target-instance"
-    target_type       = "instance"
-    port              = 8443
+    target_group_key = "target-instance"
+    target_type      = "instance"
+    port             = 8443
   }
 }
 polybot_ec2_sg_ingress_rules = [

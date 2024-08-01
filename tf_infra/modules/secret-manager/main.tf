@@ -3,7 +3,7 @@ locals {
 }
 
 resource "aws_secretsmanager_secret" "sm_secret" {
-  name = local.secret_name
+  name                    = local.secret_name
   recovery_window_in_days = 7
 
   tags = merge(

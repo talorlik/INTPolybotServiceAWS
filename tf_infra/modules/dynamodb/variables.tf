@@ -1,11 +1,11 @@
 variable "env" {
-    description = "Deployment environment"
-    type        = string
+  description = "Deployment environment"
+  type        = string
 }
 
 variable "prefix" {
-    description = "Name added to all resources"
-    type        = string
+  description = "Name added to all resources"
+  type        = string
 }
 
 variable "table_name" {

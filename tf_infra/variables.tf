@@ -1,22 +1,22 @@
 variable "env" {
-    description = "Deployment environment"
-    type        = string
+  description = "Deployment environment"
+  type        = string
 }
 
 variable "region" {
-    description = "Deployment region"
-    type        = string
-    default     = "us-east-1"
+  description = "Deployment region"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "prefix" {
-    description = "Name added to all resources"
-    type        = string
+  description = "Name added to all resources"
+  type        = string
 }
 
 variable "resource_alias" {
-    description = "My name"
-    type        = string
+  description = "My name"
+  type        = string
 }
 
 ###################### VPC #########################
@@ -215,6 +215,16 @@ variable "iam_instance_profile_name" {
   type        = string
 }
 
+variable "iam_assume_role_policy" {
+  description = "The IAM assume role policy"
+  type        = any
+}
+
+variable "iam_policy_template" {
+  description = "The IAM policy with placeholders for the ARNs"
+  type        = string
+}
+
 ############### EC2 Key Pair ####################
 
 variable "key_pair_name" {
@@ -262,10 +272,10 @@ variable "alb_security_group_egress_rules" {
 
 variable "alb_listeners" {
   description = "The listeners for the ALB"
-  type        = map(object({
-    port            = number
-    protocol        = string
-    forward         = object({
+  type = map(object({
+    port     = number
+    protocol = string
+    forward = object({
       target_group_key = string
     })
   }))
@@ -273,7 +283,7 @@ variable "alb_listeners" {
 
 variable "alb_target_groups" {
   description = "The target groups for the ALB"
-  type        = map(object({
+  type = map(object({
     protocol                          = string
     protocol_version                  = string
     port                              = number
@@ -282,7 +292,7 @@ variable "alb_target_groups" {
     load_balancing_algorithm_type     = string
     load_balancing_anomaly_mitigation = string
     load_balancing_cross_zone_enabled = bool
-    health_check                      = object({
+    health_check = object({
       enabled             = bool
       interval            = number
       path                = string
