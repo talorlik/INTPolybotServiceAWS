@@ -23,6 +23,16 @@ variable "common_name" {
   type        = string
 }
 
+variable "alb_dns_name" {
+  description = "The ALB's DNS name"
+  type        = string
+}
+
+variable "alb_zone_id" {
+  description = "The ALB's Zone ID"
+  type        = string
+}
+
 variable "tags" {
   type = map(string)
 }

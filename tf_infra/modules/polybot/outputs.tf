@@ -14,3 +14,13 @@ output "image_prefix" {
   description = "The ECR Image prefix"
   value       = var.image_prefix
 }
+
+output "alb_dns_name" {
+  description = "The ALB's DNS name"
+  value       = module.alb.dns_name
+}
+
+output "alb_zone_id" {
+  description = "The ALB's Zone ID"
+  value       = module.alb.zone_id
+}

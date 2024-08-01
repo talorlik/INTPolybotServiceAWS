@@ -59,6 +59,8 @@ module "sub_domain_and_cert" {
   locality     = var.locality
   organization = var.organization
   common_name  = var.common_name
+  alb_dns_name = module.polybot.alb_dns_name
+  alb_zone_id  = module.polybot.alb_zone_id
   tags         = local.tags
 }
 

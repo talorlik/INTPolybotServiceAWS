@@ -61,8 +61,8 @@ resource "aws_route53_record" "route53_record" {
   type    = "A"
 
   alias {
-    name                   = local.domain_name
-    zone_id                = local.domain_id
+    name                   = var.alb_dns_name
+    zone_id                = var.alb_zone_id
     evaluate_target_health = false
   }
 }
