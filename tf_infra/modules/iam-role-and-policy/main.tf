@@ -1,7 +1,7 @@
 locals {
-  iam_role_name             = "${var.prefix}-${var.iam_role_name}-${var.env}"
-  iam_role_policy_name      = "${var.prefix}-${var.iam_role_policy_name}-${var.env}"
-  iam_instance_profile_name = "${var.prefix}-${var.iam_instance_profile_name}-${var.env}"
+  iam_role_name             = "${var.prefix}-${var.region}-${var.iam_role_name}-${var.env}"
+  iam_role_policy_name      = "${var.prefix}-${var.region}-${var.iam_role_policy_name}-${var.env}"
+  iam_instance_profile_name = "${var.prefix}-${var.region}-${var.iam_instance_profile_name}-${var.env}"
   policy = templatefile("${path.module}/${var.policy_template}", {
     ecr_arn                    = var.ecr_arn,
     s3_bucket_arn              = var.s3_bucket_arn,

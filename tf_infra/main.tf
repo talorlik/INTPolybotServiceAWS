@@ -138,6 +138,7 @@ module "iam_role" {
   source = "./modules/iam-role-and-policy"
 
   env                = var.env
+  region             = var.region
   prefix             = var.prefix
   iam_role_name      = var.iam_role_name
   assume_role_policy = var.iam_assume_role_policy
