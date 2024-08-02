@@ -1,5 +1,5 @@
 locals {
-  name = "${var.prefix}-${var.key_pair_name}"
+  name = "${var.prefix}-${var.region}-${var.key_pair_name}"
 }
 
 resource "tls_private_key" "talo_tls_private_key" {

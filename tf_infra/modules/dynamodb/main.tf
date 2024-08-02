@@ -1,5 +1,5 @@
 locals {
-  table_name = "${var.prefix}-${var.table_name}-${var.env}"
+  table_name = "${var.prefix}-${var.region}-${var.table_name}-${var.env}"
 }
 
 resource "aws_dynamodb_table" "db" {

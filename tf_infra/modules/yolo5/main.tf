@@ -1,10 +1,10 @@
 locals {
-  yolo5_sg_name           = "${var.prefix}-${var.yolo5_sg_name}-${var.env}"
-  launch_template_name    = "${var.prefix}-${var.launch_template_name}-${var.env}"
-  ec2_name                = "${var.prefix}-${var.instance_name}-${var.env}"
-  asg_name                = "${var.prefix}-${var.asg_name}-${var.env}"
-  sns_topic_name          = "${var.prefix}-${var.sns_topic_name}-${var.env}"
-  autoscaling_policy_name = "${var.prefix}-${var.autoscaling_policy_name}-${var.env}"
+  yolo5_sg_name           = "${var.prefix}-${var.region}-${var.yolo5_sg_name}-${var.env}"
+  launch_template_name    = "${var.prefix}-${var.region}-${var.launch_template_name}-${var.env}"
+  ec2_name                = "${var.prefix}-${var.region}-${var.instance_name}-${var.env}"
+  asg_name                = "${var.prefix}-${var.region}-${var.asg_name}-${var.env}"
+  sns_topic_name          = "${var.prefix}-${var.region}-${var.sns_topic_name}-${var.env}"
+  autoscaling_policy_name = "${var.prefix}-${var.region}-${var.autoscaling_policy_name}-${var.env}"
   # Using a template to dynamically generate the userdata deployment script
   user_data = templatefile("${path.module}/deploy.sh.tftpl", {
     region              = var.region

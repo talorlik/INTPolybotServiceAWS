@@ -3,6 +3,12 @@ variable "env" {
   type        = string
 }
 
+variable "region" {
+  description = "Deployment region"
+  type        = string
+  default     = "us-east-1"
+}
+
 variable "prefix" {
   description = "Name added to all resources"
   type        = string

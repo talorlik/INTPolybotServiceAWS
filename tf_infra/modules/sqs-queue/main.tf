@@ -1,5 +1,5 @@
 locals {
-  queue_name = "${var.prefix}-${var.queue_name}-${var.env}"
+  queue_name = "${var.prefix}-${var.region}-${var.queue_name}-${var.env}"
 }
 
 resource "aws_sqs_queue" "queue" {

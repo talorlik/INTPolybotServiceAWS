@@ -1,5 +1,5 @@
 locals {
-  ecr_name = "${var.prefix}-${var.ecr_name}-${var.env}"
+  ecr_name = "${var.prefix}-${var.region}-${var.ecr_name}-${var.env}"
 }
 
 resource "aws_ecr_repository" "ecr" {

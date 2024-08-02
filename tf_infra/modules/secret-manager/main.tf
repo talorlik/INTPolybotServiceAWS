@@ -1,5 +1,5 @@
 locals {
-  secret_name = "${var.prefix}/${var.secret_name}/${var.env}"
+  secret_name = "${var.prefix}/${var.region}/${var.secret_name}/${var.env}"
 }
 
 resource "aws_secretsmanager_secret" "sm_secret" {

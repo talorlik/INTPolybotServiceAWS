@@ -12,7 +12,7 @@ module "ubuntu_24_04_latest" {
 
 locals {
   vpc_name       = "${var.prefix}-${var.region}-${var.env}"
-  s3_bucket_name = "${var.prefix}-${var.s3_bucket_name}-${var.env}"
+  s3_bucket_name = "${var.prefix}-${var.region}-${var.s3_bucket_name}-${var.env}"
   azs            = slice(data.aws_availability_zones.available.names, 0, 2)
   ami_id         = module.ubuntu_24_04_latest.ami_id
   tags = {
@@ -68,6 +68,7 @@ module "sub_domain_and_cert" {
 module "secret_telegram_token" {
   source      = "./modules/secret-manager"
   env         = var.env
+  region      = var.region
   prefix      = var.prefix
   secret_name = var.telegram_token_name
   secret_value = jsonencode({
@@ -79,6 +80,7 @@ module "secret_telegram_token" {
 module "secret_sub_domain_cert" {
   source       = "./modules/secret-manager"
   env          = var.env
+  region       = var.region
   prefix       = var.prefix
   secret_name  = var.domain_certificate_name
   secret_value = module.sub_domain_and_cert.certificate_body
@@ -89,6 +91,7 @@ module "secret_sub_domain_cert" {
 module "identify_queue" {
   source     = "./modules/sqs-queue"
   env        = var.env
+  region     = var.region
   prefix     = var.prefix
   queue_name = var.identify_queue_name
   tags       = local.tags
@@ -97,6 +100,7 @@ module "identify_queue" {
 module "results_queue" {
   source     = "./modules/sqs-queue"
   env        = var.env
+  region     = var.region
   prefix     = var.prefix
   queue_name = var.results_queue_name
   tags       = local.tags
@@ -108,6 +112,7 @@ module "dynamodb" {
   source = "./modules/dynamodb"
 
   env                      = var.env
+  region                   = var.region
   prefix                   = var.prefix
   table_name               = var.table_name
   billing_mode             = var.billing_mode
@@ -125,6 +130,7 @@ module "ecr_and_policy" {
   source = "./modules/ecr-and-policy"
 
   env                  = var.env
+  region               = var.region
   prefix               = var.prefix
   ecr_name             = var.ecr_name
   image_tag_mutability = var.image_tag_mutability

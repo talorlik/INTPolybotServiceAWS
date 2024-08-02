@@ -1,9 +1,9 @@
 locals {
-  alb_name          = "${var.prefix}-${var.alb_name}-${var.env}"
-  alb_listener_name = "${var.prefix}-${var.alb_listener_name}-${var.env}"
-  alb_sg_name       = "${var.prefix}-${var.alb_sg_name}-${var.env}"
-  tg_name           = "${var.prefix}-${var.tg_name}-${var.env}"
-  polybot_sg_name   = "${var.prefix}-${var.polybot_sg_name}-${var.env}"
+  alb_name          = "${var.prefix}-${var.region}-${var.alb_name}-${var.env}"
+  alb_listener_name = "${var.prefix}-${var.region}-${var.alb_listener_name}-${var.env}"
+  alb_sg_name       = "${var.prefix}-${var.region}-${var.alb_sg_name}-${var.env}"
+  tg_name           = "${var.prefix}-${var.region}-${var.tg_name}-${var.env}"
+  polybot_sg_name   = "${var.prefix}-${var.region}-${var.polybot_sg_name}-${var.env}"
 }
 resource "aws_instance" "polybot_ec2" {
   for_each = { for az in var.azs : az => az }
