@@ -207,7 +207,7 @@ polybot_ec2_sg_egress_rules = [
 ### Yolo5 ###
 yolo5_instance_name = "yolo5-ec2"
 yolo5_instance_type = "t3.medium"
-yolo_image_prefix   = "yolo5-v2"
+yolo5_image_prefix   = "yolo5-v2"
 yolo5_ec2_sg_ingress_rules = [
   {
     from_port       = 22
