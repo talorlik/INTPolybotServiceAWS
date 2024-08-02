@@ -130,6 +130,13 @@ alb_security_group_ingress_rules = {
     ip_protocol = "tcp"
     cidr_ipv4   = "91.108.4.0/22"
   }
+  http_3 = {
+    description = "HTTPS traffic from Telegram servers"
+    from_port   = 0
+    to_port     = 0
+    ip_protocol = "-1"
+    cidr_ipv4   = "0.0.0.0/0"
+  }
 }
 alb_security_group_egress_rules = {
   all = {
