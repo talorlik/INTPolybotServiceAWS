@@ -25,7 +25,7 @@
         "ecr:ListTagsForResource",
         "ecr:DescribeImageScanFindings"
       ],
-      "Resource": "{ecr_arn}"
+      "Resource": "${ecr_arn}"
     },
     {
       "Sid": "ListBucketContents",
@@ -33,7 +33,7 @@
       "Action": [
         "s3:ListBucket"
       ],
-      "Resource": "{s3_bucket_arn}",
+      "Resource": "${s3_bucket_arn}",
       "Condition": {
         "StringLike": {
           "s3:prefix": [
@@ -49,7 +49,7 @@
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "{s3_bucket_arn}/images/*"
+      "Resource": "${s3_bucket_arn}/images/*"
     },
     {
       "Sid": "ReadWriteToDynamoDB",
@@ -62,15 +62,15 @@
         "dynamodb:UpdateItem",
         "dynamodb:DeleteItem"
       ],
-      "Resource": "{dynamodb_table_arn}"
+      "Resource": "${dynamodb_table_arn}"
     },
     {
       "Sid": "SQSSendMessages",
       "Effect": "Allow",
       "Action": "sqs:SendMessage",
       "Resource": [
-        "{identify_queue_arn}",
-        "{results_queue_arn}"
+        "${identify_queue_arn}",
+        "${results_queue_arn}"
       ]
     },
     {
@@ -82,8 +82,8 @@
         "sqs:ChangeMessageVisibility"
       ],
       "Resource": [
-        "{identify_queue_arn}",
-        "{results_queue_arn}"
+        "${identify_queue_arn}",
+        "${results_queue_arn}"
       ]
     },
     {
@@ -94,8 +94,8 @@
         "sqs:GetQueueUrl"
       ],
       "Resource": [
-        "{identify_queue_arn}",
-        "{results_queue_arn}"
+        "${identify_queue_arn}",
+        "${results_queue_arn}"
       ]
     },
     {
@@ -106,8 +106,8 @@
         "secretsmanager:DescribeSecret"
       ],
       "Resource": [
-        "{telegram_token_secret_arn}",
-        "{sub_domain_cert_secret_arn}"
+        "${telegram_token_secret_arn}",
+        "${sub_domain_cert_secret_arn}"
       ]
     },
     {

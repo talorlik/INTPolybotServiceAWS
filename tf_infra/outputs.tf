@@ -149,6 +149,10 @@ output "iam_instance_profile_name" {
   value = module.iam_role.iam_instance_profile_name
 }
 
+output "iam_role_policy" {
+  value = module.iam_role.iam_role_policy
+}
+
 ############# EC2 Key Pair ##################
 
 output "key_pair_name" {
