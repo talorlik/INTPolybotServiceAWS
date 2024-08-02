@@ -130,11 +130,6 @@ variable "alb_security_group_egress_rules" {
   }))
 }
 
-variable "referenced_security_group_id" {
-  description = "The default security group ID for egress rules"
-  type        = string
-}
-
 variable "client_keep_alive" {
   description = "Keep the connection open"
   type        = number

@@ -133,7 +133,7 @@ alb_security_group_ingress_rules = {
 }
 alb_security_group_egress_rules = {
   all = {
-    description = "Out through the default security group"
+    description = "Out to the polybot security group"
     from_port   = 8443
     to_port     = 8443
     ip_protocol = "tcp"

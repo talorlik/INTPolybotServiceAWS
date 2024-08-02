@@ -188,7 +188,6 @@ module "polybot" {
   vpc_id                                  = module.vpc.vpc_id
   alb_security_group_ingress_rules        = var.alb_security_group_ingress_rules
   alb_security_group_egress_rules         = var.alb_security_group_egress_rules
-  referenced_security_group_id            = module.vpc.default_security_group_id
   alb_listeners                           = var.alb_listeners
   certificate_arn                         = module.sub_domain_and_cert.certificate_arn
   alb_target_groups                       = var.alb_target_groups

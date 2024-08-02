@@ -61,7 +61,7 @@ module "alb" {
     from_port                    = v.from_port
     to_port                      = v.to_port
     ip_protocol                  = v.ip_protocol
-    referenced_security_group_id = var.referenced_security_group_id
+    referenced_security_group_id = aws_security_group.polybot_ec2_sg.id
   } }
   security_group_tags = merge(
     {
