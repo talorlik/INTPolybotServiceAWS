@@ -62,8 +62,8 @@ jobs:
       - name: Terraform validate
         run: terraform validate
 
-      - name: Unlock Terraform
-        run: terraform force-unlock -force a3be03e3-b1d3-1ea3-31da-5e8fab8e958d
+      # - name: Unlock Terraform
+      #   run: terraform force-unlock -force a3be03e3-b1d3-1ea3-31da-5e8fab8e958d
 
       - name: Terraform plan
         run: |
