@@ -270,9 +270,9 @@ I've made use of both modules which are ready made from the official AWS Terrafo
 #### Infra
 
 * The Infra deployment consists of three workflows
-  - [main](.github/workflows/infra-provisioning-main.yaml) which triggers the next one
-  - [region specific](.github/workflows/infra-provisioning-region.yaml)
-  - [destroy](.github/workflows/infra-destroying.yaml)
+  - [Main](.github/workflows/infra-provisioning-main.yaml) which triggers the next one
+  - [Region Specific](.github/workflows/infra-provisioning-region.yaml)
+  - [Destroy](.github/workflows/infra-destroying.yaml)
 
 ##### Infra Breakdown
 
