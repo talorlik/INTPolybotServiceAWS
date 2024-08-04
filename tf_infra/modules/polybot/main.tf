@@ -5,6 +5,8 @@ locals {
   tg_name           = "${var.prefix}-${var.region}-${var.tg_name}-${var.env}"
   polybot_sg_name   = "${var.prefix}-${var.region}-${var.polybot_sg_name}-${var.env}"
 }
+
+##################### EC2s ###########################
 resource "aws_instance" "polybot_ec2" {
   for_each = { for az in var.azs : az => az }
 
@@ -38,6 +40,11 @@ locals {
   instance_ids = values(aws_instance.polybot_ec2)
 }
 
+############# Application Load Balancer ###################
+################## Security Group ########################
+#################### Listeners ###########################
+################### Target Group #########################
+################### Health Checks ########################
 module "alb" {
   source = "terraform-aws-modules/alb/aws"
 
@@ -134,6 +141,7 @@ module "alb" {
   )
 }
 
+################## Security Group ########################
 resource "aws_security_group" "polybot_ec2_sg" {
   name   = local.polybot_sg_name
   vpc_id = var.vpc_id

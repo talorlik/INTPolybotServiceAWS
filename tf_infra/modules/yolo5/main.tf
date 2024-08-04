@@ -19,7 +19,7 @@ locals {
   })
 }
 
-################## Security Groups ########################
+################## Security Group ########################
 resource "aws_security_group" "yolo5_ec2_sg" {
   name   = local.yolo5_sg_name
   vpc_id = var.vpc_id

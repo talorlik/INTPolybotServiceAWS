@@ -10,6 +10,9 @@ To fully understand the functionality involved regarding image filtering, image 
 
 ## AWS Infra
 
+> [!NOTE]
+> A full explanation of the Terraform deployment of the infra described below can be read here [Terraform](#terraform)
+
 1. A `VPC`, `talo-vpc`, containing two Public Subnets, `talo-public-subnet` and `talo-public-subnet-2` in `us-east-1a` and `us-east-1b` `Availability Zones (AZ)` respectively.
 2. The services deployed within these subnets communicate to the world via an `Internet Gateway`, `talo-igw`, which is attached on the VPC.
 3. The `Polybot` service runs as a `Docker` container on two `EC2` machines (`t3.micro`), `talo-ec2-polybot-1` and `talo-ec2-polybot-2` respectively (1 in each AZ), behind an `Application Load Balancer (ALB)`, `talo-alb`.
@@ -49,18 +52,28 @@ To fully understand the functionality involved regarding image filtering, image 
 
 ```console
 .
+├── .github
+│   └── workflows
+│       ├── backend-state-destroying.yaml
+│       ├── backend-state-provisioning.yaml
+│       ├── infra-destroying.yaml
+│       ├── infra-provisioning-main.yaml
+│       ├── infra-provisioning-region.yaml
+│       ├── polybot-deployment.yaml
+│       └── yolo5-deployment.yaml
+├── .gitignore
 ├── AWS_Project.jpg
 ├── LICENSE
 ├── README.md
 ├── load_test.py
 ├── polybot
+│   ├── .dockerignore
 │   ├── Dockerfile
 │   ├── __init__.py
 │   ├── ansible
 │   │   ├── ansible.cfg
 │   │   ├── aws_ec2.yaml
 │   │   └── playbook.yaml
-│   ├── pushrefresh.txt
 │   ├── python
 │   │   ├── __init__.py
 │   │   ├── bot.py
@@ -72,7 +85,68 @@ To fully understand the functionality involved regarding image filtering, image 
 │   │   └── requirements.txt
 │   ├── uwsgi.ini
 │   └── wsgi.py
+├── tf_backend_state
+│   ├── .gitignore
+│   ├── .terraform.lock.hcl
+│   ├── dev.tfvars
+│   ├── main.tf
+│   ├── prod.tfvars
+│   ├── providers.tf
+│   ├── terraform.plan
+│   ├── terraform.tfstate
+│   └── variables.tf
+├── tf_infra
+│   ├── .gitignore
+│   ├── .terraform.lock.hcl
+│   ├── main.tf
+│   ├── modules
+│   │   ├── dynamodb
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── ec2-key-pair
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── ecr-and-policy
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── iam-role-and-policy
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   ├── policy_template.tftpl
+│   │   │   └── variables.tf
+│   │   ├── polybot
+│   │   │   ├── deploy.sh
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── secret-manager
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── sqs-queue
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   ├── sub-domain-and-cert
+│   │   │   ├── generate_certificate.sh
+│   │   │   ├── main.tf
+│   │   │   ├── outputs.tf
+│   │   │   └── variables.tf
+│   │   └── yolo5
+│   │       ├── deploy.sh.tftpl
+│   │       ├── main.tf
+│   │       ├── outputs.tf
+│   │       └── variables.tf
+│   ├── outputs.tf
+│   ├── providers.tf
+│   ├── region.us-east-1.tfvars
+│   ├── region.us-east-2.tfvars
+│   └── variables.tf
 └── yolo5
+    ├── .dockerignore
     ├── Dockerfile
     ├── ansible
     │   ├── ansible.cfg
@@ -80,7 +154,6 @@ To fully understand the functionality involved regarding image filtering, image 
     │   └── playbook.yaml
     ├── app.py
     ├── prediction_cleanup.sh
-    ├── pushrefresh.txt
     ├── requirements.txt
     └── yolo_utils.py
 ```
@@ -103,7 +176,8 @@ To fully understand the functionality involved regarding image filtering, image 
   - I added this to the Dockerfile
 * The container is run with the `--restart always` flag so that when that machine stops and starts or restarts for some reason, the container will immediately start as well.
 
-> **NOTE:** I've discovered that with the existing architecture the `concat` image filtering functionality doesn't work because for every image in the group Telegram makes an HTTP request causing the ALB to route the second request to the second machine thus making it "loose" state.
+> [!NOTE]
+> I've discovered that with the existing architecture the `concat` image filtering functionality doesn't work because for every image in the group Telegram makes an HTTP request causing the ALB to route the second request to the second machine thus making it "loose" state.
 > In order to resolve this some additional component has to be introduced, perhaps Redis or another Table in DynamoDB.
 
 ## Testing
@@ -114,14 +188,116 @@ To fully understand the functionality involved regarding image filtering, image 
    Check your ASG size, you should see that the desired capacity increases in response to the increased load.
 4. After approximately 15 minutes of reduced load, CloudWatch alarms for scale-in will be triggered.
 
+## Terraform
+
+### Backend State
+
+> [!IMPORTANT]
+> This has to be deployed prior to the main project else the init will not work.
+
+In order to manage the Terraform state one has to create the backend infra which includes the S3 bucket `talo-tf-s3-tfstate` for the state file itself and DynamoDB Table `talo-tf-terraform-lock-table` for the locking mechanism so prevent deployment from multiple sources, overriding each other.
+
+I've created a separate Terraform deployment for this purpose in the `tf_backend_state` directory. It creates the above mentioned services with the relevant failure and security configurations, such as versioning and encryption on the bucket. Also, both the S3 and the DynamoDB Table get least privilege Service Policies allowing only myself to execute specific actions on them.
+
+### Main Project
+
+The main project's infrastructure deployment is in the `tf_infra` directory.
+Here I've follow TF best practices:
+1. Making use of modules to create clear and easy to manage separation of the various components making up the whole project.
+2. Each module has it's own main, variables and outputs.
+3. Separating variables from their values so that it's easy to alter values and redeploy.
+4. Separating the outputs.
+5. Names are dynamically created per region and environment to prevent any possible clash.
+6. All services and elements that make them up are tagged
+
+The modules are in two categories:
+1. Global modules which are not service specific or are shared amongst multiple services.
+2. Custom modules which are made of a group of resources for a specific service.
+
+I've made use of both modules which are ready made from the official AWS Terraform repository and some which I've custom built for this project's specific needs.
+
+#### Module Breakdown
+
+1. Root main - Calls all other modules.
+  1. It makes use of a `data` resource to get the available AZs for the region.
+  2. It uses the [terraform-aws-ami-ubuntu](https://github.com/andreswebs/terraform-aws-ami-ubuntu) to get the latest Ubuntu 24.04 distribution.
+  3. Has some declared locals for names, AZs, AMI and tags
+  4. All values are passed in and then "trickle-in" to the relevant modules.
+  5. Certain values come directly from outputs of modules
+2. [VPC](https://registry.terraform.io/modules/terraform-aws-modules/vpc/aws/latest) - Creates all relevant services for the VPC, such as:
+  1. Subnets
+  2. Route tables
+  3. Security groups
+  4. Network connections
+3. [S3](https://registry.terraform.io/modules/terraform-aws-modules/s3-bucket/aws/latest) - Creates and configures the bucket
+4. [Route53 - Sub Domain and Certificate](tf_infra/modules/sub-domain-and-cert) - Creates a Self-Signed Certificate of which values are injected dynamically through the CI/CD inputs. It then creates an A Record under the main College domain using that certificate. It uses a `aws_route53_zone` data source to get information regarding the main domain.
+5. [Secret Manager](tf_infra/modules/secret-manager/) - I've made generic so that multiple secrets can be created with it. It's able to create either `plain text` or `key-value` secrets depending on the value that is passed into it.
+  1. In my case, two secrets are created: one for the Telegram Token as key-value and one is the sub-domain certificate which I later pull for use in the Python code
+6. [SQS](tf_infra/modules/sqs-queue/) - I've made it generic so that multiple queues can be created with it.
+  1. In my case, two queues are created: one for the `identify` and one for the `results`
+7. [DynamoDB](tf_infra/modules/dynamodb/) - Creates the Dynamo DB Table with it's partition key and indexes based on values sent passed in.
+8. [ECR and Lifecycle Policy](tf_infra/modules/ecr-and-policy/) - Creates an ECR Repository and Lifecycle Policy to be used to store the Docker images I build either manually or through the CI/CD process.
+  1. In my case the lifecycle policy only keeps one copy (the latest one) of each docker image and only keeps 1 untagged image for 'caching'
+9. [IAM Role and Policy](tf_infra/modules/iam-role-and-policy/) - Creates the IAM Role with the Policy that is needed to give permissions to the different services to talk to each other. It makes use of a `policy_template.tftpl` and dynamically replaces all the ARN placeholders which are retrieved from the other modules and passed in.
+10. [EC2 Key Pair](tf_infra/modules/ec2-key-pair) - It creates an SSH Key Pair which I then use to be able to SSH into all the EC2 machines created in this project. It also saves both private and public keys physically as files as I later upload them as artifacts so that they can be downloaded and used.
+11. [Polybot](tf_infra/modules/polybot) - It creates all the relevant components which make up the Polybot service such as:
+  1. **EC2** per AZ and uses the `deploy.sh` file for the `user_data` to install things which are needed in order for things to work.
+  2. [Application Load Balancer (ALB)](https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest) using the official AWS module. It creates all the relevant resources such as:
+    - Security Group for the ALB
+    - Listeners
+    - Target Groups and Health Checks
+  3. Security Group for the EC2s
+12. [Yolo5](tf_infra/modules/yolo5) - It creates all the relevant components which make up the Yolo5 service such as:
+  1. Security Group for the EC2s
+  2. Launch Template with all the relevant configurations.
+    - The launch template makes use of `deploy.sh.tftpl` file for the user_data into which values are passed in dynamically.
+  3. Auto Scaling Group and Policy
+  4. SNS Topic for scaling event notifications
+
 ## CI/CD pipeline with GitHub Actions
 
-* I created two GitHub Workflows, one for the Polybot, `.github/workflows/polybot-deployment.yaml` and one for the Yolo5 `.github/workflows/yolo5-deployment.yaml`.
-* Each is triggered upon push action to the `main` branch to their respective directories (`polybot` and `yolo5`)ץ
-* Each consists of two jobs, namely: `Build` and `Deploy`.
-* In the Build job it build a new Docker image and pushes it to the ECR.
-* In the Deploy job I've made use of Ansible to deploy the application's new image on the machines and run the docker container.
-  - I'm using the aws_ec2 Ansible plugin to dynamically build the inventory base on Tags that I've assigned to the Polybot and Yolo5 EC2 machines, `APP=talo-polybot` and `APP=talo-yolo5` respectively.
+### Backend State
 
+* I created two manually triggered workflows
+  - [Provision](.github/workflows/backend-state-provisioning.yaml)
+  - [Destroy](.github/workflows/backend-state-destroying.yaml)
+
+### Main Project
+
+#### Infra
+
+* The Infra deployment consists of three workflows
+  - [main](.github/workflows/infra-provisioning-main.yaml) which triggers the next one
+  - [region specific](.github/workflows/infra-provisioning-region.yaml)
+  - [destroy](.github/workflows/infra-destroying.yaml)
+
+##### Infra Breakdown
+
+**Main**
+* The main workflow takes inputs for the region, sub-domain details and environment.
+* Based on the region selection it passes onto the next workflow the correct Telegram Token which is saved in GitHub Secrets.
+
+**Region Sepccific**
+* Takes in the incoming values from the main workflow.
+* Sets up Terraform, initializes it, selects workspace, plans and applies.
+* Once the Terraform provisioning is done it captures the paths of the SSH private and public keys from the outputs and uploads them as Artifacts for later use.
+* It also captures all of the Terraform outputs into a file and uploads it as Artifacts for use in following workflows.
+
+**Destroy**
+* The destroy workflow captures the latest successful `run_id` from the main workflow using GitHub API command and sets it as GitHub outputs for use in following job
+* It uses the `run_id` output to download the Terraform outputs file from the Artifacts.
+* It uses jq to extract values from the outputs file and sets them as GitHub outputs for use in following job
+* The last job sets up Terraform, captures the correct Telegram Token from GitHub Secrets based on the region, initializes it, selects workspace, plans and applies using the values that were passed down
+
+#### Services
+
+* There are two services, namely: `Polybot` and `Yolo5` each deployed on manual trigger with their respective workflows:
+  - [Polybot](.github/workflows/polybot-deployment.yaml)
+  - [Yolo5](.github/workflows/yolo5-deployment.yaml)
+* Both workflows are structured similarly:
+  - Each consists of two jobs, namely: `Build` and `Deploy`.
+  - In the Build job it builds a new Docker image and pushes it to the ECR.
+  - In the Deploy job I've made use of `Ansible` to deploy the application's new image on the machines and run the docker container.
+  - I'm using the `aws_ec2` Ansible plugin to dynamically build the inventory base on Tags that I've assigned to the Polybot and Yolo5 EC2 machines, `APP=talo-polybot` and `APP=talo-yolo5` respectively.
 
 [architecture]: https://github.com/talorlik/INTPolybotServiceAWS/blob/main/AWS_Project.jpg
