@@ -233,7 +233,7 @@ I've made use of both modules which are ready made from the official AWS Terrafo
   3. Security groups
   4. Network connections
 3. [S3](https://registry.terraform.io/modules/terraform-aws-modules/s3-bucket/aws/latest) - Creates and configures the bucket
-4. [Route53 - Sub Domain and Certificate](tf_infra/modules/sub-domain-and-cert) - Creates a Self-Signed Certificate of which values are injected dynamically through the CI/CD inputs. It then creates an A Record under the main College domain using that certificate. It uses a `aws_route53_zone` data source to get information regarding the main domain.
+4. [Route53 - Sub Domain and Certificate](tf_infra/modules/sub-domain-and-cert/) - Creates a Self-Signed Certificate of which values are injected dynamically through the CI/CD inputs. It then creates an A Record under the main College domain using that certificate. It uses a `aws_route53_zone` data source to get information regarding the main domain.
 5. [Secret Manager](tf_infra/modules/secret-manager/) - I've made generic so that multiple secrets can be created with it. It's able to create either `plain text` or `key-value` secrets depending on the value that is passed into it.
   1. In my case, two secrets are created: one for the Telegram Token as key-value and one is the sub-domain certificate which I later pull for use in the Python code
 6. [SQS](tf_infra/modules/sqs-queue/) - I've made it generic so that multiple queues can be created with it.
@@ -242,15 +242,15 @@ I've made use of both modules which are ready made from the official AWS Terrafo
 8. [ECR and Lifecycle Policy](tf_infra/modules/ecr-and-policy/) - Creates an ECR Repository and Lifecycle Policy to be used to store the Docker images I build either manually or through the CI/CD process.
   1. In my case the lifecycle policy only keeps one copy (the latest one) of each docker image and only keeps 1 untagged image for 'caching'
 9. [IAM Role and Policy](tf_infra/modules/iam-role-and-policy/) - Creates the IAM Role with the Policy that is needed to give permissions to the different services to talk to each other. It makes use of a `policy_template.tftpl` and dynamically replaces all the ARN placeholders which are retrieved from the other modules and passed in.
-10. [EC2 Key Pair](tf_infra/modules/ec2-key-pair) - It creates an SSH Key Pair which I then use to be able to SSH into all the EC2 machines created in this project. It also saves both private and public keys physically as files as I later upload them as artifacts so that they can be downloaded and used.
-11. [Polybot](tf_infra/modules/polybot) - It creates all the relevant components which make up the Polybot service such as:
+10. [EC2 Key Pair](tf_infra/modules/ec2-key-pair/) - It creates an SSH Key Pair which I then use to be able to SSH into all the EC2 machines created in this project. It also saves both private and public keys physically as files as I later upload them as artifacts so that they can be downloaded and used.
+11. [Polybot](tf_infra/modules/polybot/) - It creates all the relevant components which make up the Polybot service such as:
   1. **EC2** per AZ and uses the `deploy.sh` file for the `user_data` to install things which are needed in order for things to work.
   2. [Application Load Balancer (ALB)](https://registry.terraform.io/modules/terraform-aws-modules/alb/aws/latest) using the official AWS module. It creates all the relevant resources such as:
     - Security Group for the ALB
     - Listeners
     - Target Groups and Health Checks
   3. Security Group for the EC2s
-12. [Yolo5](tf_infra/modules/yolo5) - It creates all the relevant components which make up the Yolo5 service such as:
+12. [Yolo5](tf_infra/modules/yolo5/) - It creates all the relevant components which make up the Yolo5 service such as:
   1. Security Group for the EC2s
   2. Launch Template with all the relevant configurations.
     - The launch template makes use of `deploy.sh.tftpl` file for the user_data into which values are passed in dynamically.
