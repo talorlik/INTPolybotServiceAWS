@@ -165,22 +165,22 @@ To fully understand the functionality involved regarding image filtering, image 
 
 ### Polybot
 
-* In the Python code I'm using Threading. When the application starts two threads get initiated, one for the Bot to poll the SQS Queue for results and one for the Bot to poll an internal Python Queue for incoming messages from the Telegram app.
-* Both threads are getting a single instance of the bot_factory so that the same bot setup is used in both. Both threads also get the app to maintain context for globally declared values.
+* In the Python code I'm using Threading. When the application starts two threads get initiated, one for the Bot to poll the `results` SQS Queue and one for the Bot to poll an internal Python Queue for incoming messages from the Telegram app.
+* Both threads are getting a single instance of the `bot_factory` so that the same bot setup is used in both. Both threads also get the app to maintain context for globally declared values.
 * The secrets i.e. the Telegram Token and Domain Certificate are pulled from AWS Secret Manager and used in the code but are not saved anywhere thus improving security.
 * The Polybot Dockerfile no longer uses the UWSGI server. It now makes use of regular Flask server. The reason for this has to do with my use of threading which didn't work with the UWSGI.
 * The container is run with the `--restart always` flag so that when that machine stops and starts or restarts for some reason, the container will immediately start as well.
 
 ### Yolo5
 
-* The yolo5 service no longer uses Flask server to run as it's not only "listening" to incoming messages from the "identify" SQS Queue.
-* I've decoupled the services by introducing an additional SQS Queue so that the Yolo5 doesn't have to make a POST request to the Polybot directly (via the ALB) but rather place a message in the new queue.
-* In order to prevent container bloat, I've created a cleanup bash script which I run as a cron service in the background. It deletes all the prediction files and images that are older than 2 minutes.
-  - I added this to the Dockerfile
+* The yolo5 service polls the `identify` SQS Queue for incoming messages placed there by the `Polybot` service.
+* I've decoupled the services by introducing an additional SQS Queue so that the Yolo5 doesn't make a POST request to the Polybot directly (via the ALB) but rather place a message in the `results` queue.
+* In order to prevent container bloat, I've created a cleanup bash script, `prediction_cleanup.sh`, which I run as a cron service in the background inside the container. It deletes all the prediction files and images that are older than 2 minutes.
+  - I added this to the `Dockerfile`.
 * The container is run with the `--restart always` flag so that when that machine stops and starts or restarts for some reason, the container will immediately start as well.
 
 > [!NOTE]
-> I've discovered that with the existing architecture the `concat` image filtering functionality doesn't work because for every image in the group Telegram makes an HTTP request causing the ALB to route the second request to the second machine thus making it "loose" state.
+> I've discovered that with the existing architecture the `concat` image filtering functionality doesn't work because for every image in the group Telegram makes a separate HTTP request causing the ALB to route the second request to the second machine thus making it "loose" state.
 > In order to resolve this some additional component has to be introduced, perhaps Redis or another Table in DynamoDB.
 
 ## Testing
