@@ -13,29 +13,32 @@ To fully understand the functionality involved regarding image filtering, image 
 > [!NOTE]
 > A full explanation of the Terraform deployment of the infra described below can be read here [Terraform](#terraform)
 
-1. A `VPC`, `talo-vpc`, containing two Public Subnets, `talo-public-subnet` and `talo-public-subnet-2` in `us-east-1a` and `us-east-1b` `Availability Zones (AZ)` respectively.
-2. The services deployed within these subnets communicate to the world via an `Internet Gateway`, `talo-igw`, which is attached on the VPC.
-3. The `Polybot` service runs as a `Docker` container on two `EC2` machines (`t3.micro`), `talo-ec2-polybot-1` and `talo-ec2-polybot-2` respectively (1 in each AZ), behind an `Application Load Balancer (ALB)`, `talo-alb`.
-    - I've created a sub-domain, `talo-polybot.int-devops.click` under the main `INT` domain and attached it to the ALB.
+1. A `VPC` in `us-east-1` or `us-east-2`, containing two Public Subnets, in `us-east-1a` and `us-east-1b` or `us-east-2a` and `us-east-2b` `Availability Zones (AZ)` respectively.
+2. The services deployed within these subnets communicate to the world via an `Internet Gateway`, which is attached on the VPC.
+3. The `Polybot` service runs as a `Docker` container on two `EC2` machines (`t3.micro`), 1 in each AZ, behind an `Application Load Balancer (ALB)`.
+    - I've created a sub-domain under the main `INT` domain `.int-devops.click` and attached it to the ALB.
     - I've created a <a href="https://core.telegram.org/bots/webhooks#a-self-signed-certificate" title="self-signed certificate" target="_blank">self-signed certificate</a> and attached it to my sub-domain for secure communication with the Telegram API.
 4. The `Yolo5` service runs as a `Docker` container, starting with a single `EC2` (`t3.medium`) which is instantiated via an `Auto Scaling Group (ASG)`.
-    - The ASG is configured to auto scale when the CPU reaches 20% utilization (for testing purposes)
-    - The ASG makes use of a `Launch Template (LT)`, `talo-launch-template`, to create the EC2 machines.
-      - The LT uses <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" title="User Data" target="_blank">User Data</a> to automatically get the latest Docker image from the `ECR` repository `talo-docker-images` and then run the Yolo5 service.
+    - The ASG is configured to scale up when the CPU reaches 20% utilization **(for testing purposes)**
+    - The ASG makes use of a `Launch Template (LT)`, to create the EC2 machines.
+      - The LT uses <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/user-data.html" title="User Data" target="_blank">User Data</a> to automatically install what is needed and get the latest Docker image from the `ECR` repository and then run the Yolo5 service.
       - The LT is configured to deploy the EC2s inside the above VPC and in the specified subnets.
-      - It also makes use of an existing `Key Pair`, `talo-key-pair` for SSH.
-      - It uses the same SG as the Polybot's EC2 machines (read below).
-5. There is a `Security Group (SG)` for the ALB `talo-alb-sg` which restricts Inbound traffic to the <a href="https://core.telegram.org/bots/webhooks" title="CIDRs of Telegram servers" target="_blank">CIDRs of Telegram servers</a> on port 8443 only and Outbound to the Security Group of the EC2 machines on port 8443 as well.
-6. The SG for the EC2s, `talo-public-sg` accepts Inbound traffic only from the ALB SG and Outbound to All.
-7. All EC2 machines have Public IP enabled for convenience only, for use with SSH.
-8. A `Secret Manager (SM)` which has two secrets in it: `talo/telegram/token` and `talo/sub-domain/certificate`.
-9. There are two `SQS Queues`, `talo-sqs-identify` and `talo-sqs-results` with which each of the EC2s can put messages into and pull messages from.
-10. A `DynamoDB`, `talo-prediction-results` into which the Image Object Detection results are written and read from.
-11. An `S3 Bucket`, `talo-s3` which holds the images which are to be identified and then the resulted images.
-12. I've created an `IAM Role`, `talo-ec2-role` with an inline policy `talo-ec2-policy` which follows the `Least Privilege` principle and only grants the absolute necessary permissions to the EC2s.
+      - It also makes use of an existing `Key Pair` which is created separately for SSH.
+      - It uses its own SG for the Yolo5's EC2 machines (read below).
+5. There is a `Security Group (SG)` for the ALB which restricts Inbound traffic to the <a href="https://core.telegram.org/bots/webhooks" title="CIDRs of Telegram servers" target="_blank">CIDRs of Telegram servers</a> on port 8443 only and Outbound to the Security Group of the Polybot's EC2 machines on port 8443 as well.
+6. The SG for the Polybot's EC2s, accepts Inbound traffic only from the ALB SG and SSH and Outbound to All.
+7. The SG for the Yolo5's EC2s, accepts Inbound traffic only for SSH and Outbound to All.
+8. All EC2 machines have Public IP enabled for convenience only, for use with SSH.
+9. A `Secret Manager (SM)` which has two secrets in it:
+  - Telegram Token
+  - Sub-Domain Certificate
+10. There are two `SQS Queues`, one for `identify` and one for `results` with which each of the EC2s can put messages into and pull messages from.
+11. A `DynamoDB` Table, into which the Image Object Detection results are written and read from.
+12. An `S3 Bucket`, which holds the images which are to be identified and then the resulted images.
+13. I've created an `IAM Role`, with an inline policy, which follows the `Least Privilege` principle and only grants the absolute necessary permissions to the EC2s.
     - For the Polybot the role is attached to the two machines
     - for the Yolo5 the role is part of the LT configuration and each machine that is created gets it.
-13. I created an `AMI` which is Ubuntu based and has everything I need already installed. I use this image for the creation of all the EC2s in this project.
+14. I use the latest Ubuntu 24.04 `AMI`. I use this image for the creation of all the EC2s in this project.
 
 ![][architecture]
 
@@ -43,9 +46,9 @@ To fully understand the functionality involved regarding image filtering, image 
 
 1. The user uploads an image on the Telegram App and puts a caption of `predict`.
 2. The Polybot service picks up the message and handles it by instantiating the `ObjectDetectionBot`.
-3. The image is then uploaded to S3 and a message with the `chatId` and `imgName` to the `talo-sqs-identify` SQS Queue.
+3. The image is then uploaded to S3 and a message with the `chatId` and `imgName` to the `identify` SQS Queue.
 4. The Yolo5 service polls the identify SQS Queue for incoming messages. Once a message is picked up, it gets the `imgName`, downloads it from S3 and the detection process kicks in.
-5. The resulted image is uploaded back to S3 and the summary is save to DynamoDB. A message containing either a failure or success details is sent to the `talo-sqs-results` SQS Queue.
+5. The resulted image is uploaded back to S3 and the summary is save to DynamoDB. A message containing either a failure or success details is sent to the `results` SQS Queue.
 6. The Polybot service polls the results SQS Queue for incoming results messages. Once a message is picked up it gets the `prediction_id`, queries the DynamoDB, gets the output from the prediction, parses the output, gets the image name and downloads it from S3, sends responds back to the user with the image and a readable summary of what was found.
 
 ## Directory structure
